@@ -15,7 +15,7 @@ RUN apk add --update --virtual .build-deps \
     | sort -u \
     | awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
     )" \
-  && apk add --update --virtual .controller-rundeps \
+  && apk add --update --virtual .helmbroker-rundeps \
     $runDeps \
     ca-certificates \
     su-exec \
