@@ -1,0 +1,7 @@
+name: helmbroker
+home: https://github.com/drycc/helmbroker
+version: v1.0.0
+description: Drycc Workflow helmbroker.
+maintainers:
+  - name: Drycc Team
+    email: engineering@drycc.com

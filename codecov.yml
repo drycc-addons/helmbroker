@@ -1,0 +1,10 @@
+# documentation is at https://codecov.io/gh/drycc/helmbroker/settings/yaml
+comment:
+  layout: header, diff
+coverage:
+  branch: main
+  status:
+    project:
+      default:
+        threshold: 0.2
+    changes: false

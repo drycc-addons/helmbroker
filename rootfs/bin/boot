@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+#
+# This script is designed to be run inside the container
+#
+
+# fail hard and fast even on pipelines
+set -eo pipefail
+
+# spawn a gunicorn server in the background
+echo ""
+echo "Starting up Gunicorn"
+gunicorn -c /app/helmbroker/gunicorn/config.py helmbroker.wsgi &
+
+# smart shutdown on SIGTERM (SIGINT is handled by gunicorn)
+function on_exit() {
+	GUNICORN_PID=$(cat /tmp/gunicorn.pid)
+	kill -TERM "$GUNICORN_PID" 2>/dev/null
+	wait "$GUNICORN_PID" 2>/dev/null
+	exit 0
+}
+trap on_exit TERM
+
+echo ""
+echo drycc-helmbroker running...
+
+wait
