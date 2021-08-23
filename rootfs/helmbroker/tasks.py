@@ -1,6 +1,5 @@
 import os
 import shutil
-from .celery import app
 from .utils import command, get_plan_path, get_chart_path, get_or_create_instance_meta
 from openbrokerapi.service_broker import *
 
@@ -12,7 +11,7 @@ def provision(iself,
                   **kwargs) -> ProvisionedServiceSpec:
     chart_path = get_chart_path(instance_id)
     values_file =  os.path.join(get_plan_path(instance_id), "values.yaml")
-    args = [ 
+    args = [
         "install",
         details.context["instance_name"],
         chart_path,

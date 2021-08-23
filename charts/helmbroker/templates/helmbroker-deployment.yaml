@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drycc-helmbroker-cm
+  labels:
+    heritage: drycc
+  annotations:
+    component.drycc.cc/version: {{ .Values.image_tag }}
+spec:
+  replicas: {{ .Values.replicas }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: drycc-helmbroker
+  template:
+    metadata:
+      labels:
+        app: drycc-helmbroker
+    spec:
+      serviceAccount: drycc-helmbroker
+      containers:
+        - name: drycc-helmbroker
+          image: {{.Values.image_registry}}/{{.Values.image_org}}/helmbroker:{{.Values.image_tag}}
+          imagePullPolicy: {{.Values.image_pull_policy}}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: 5000
+            initialDelaySeconds: 30
+            timeoutSeconds: 10
+            periodSeconds: 5
+          ports:
+            - containerPort: 8000
+              name: http
+          {{- include "helmbroker.limits" . | indent 10 }}
+          {{- include "helmbroker.envs" . | indent 10 }}
+          {{- include "helmbroker.volumeMounts" . | indent 10 }}
+      {{- include "helmbroker.volumes" . | indent 6 }}
