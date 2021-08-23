@@ -8,29 +8,35 @@ from openbrokerapi.service_broker import *
 
 from .utils import get_instance_path, get_chart_path, get_plan_path, get_addon_path
 from .tasks import provision
+from helmbroker.loader import read_addons_file
+
 
 class HelmServiceBroker(ServiceBroker):
 
     def catalog(self) -> Union[Service, List[Service]]:
+        services = read_addons_file()
         return [Service(
-            id='server',
-            name='server',
-            description='service description',
-            bindable=True,
-            plans=[
-                ServicePlan(
-                    id='server-1:1-1',
-                    name='1-1',
-                    description='plan description',
-                ),
-                ServicePlan(
-                    id='server-2:2-2',
-                    name='2-2',
-                    description='plan description',
-                )
-            ],
-            plan_updateable=True,
-        )]
+            **addons
+        ) for _,addons in services.items()]
+        # return Service(
+        #     id='server',
+        #     name='server',
+        #     description='service description',
+        #     bindable=True,
+        #     plans=[
+        #         ServicePlan(
+        #             id='server-1:1-1',
+        #             name='1-1',
+        #             description='plan description',
+        #         ),
+        #         ServicePlan(
+        #             id='server-2:2-2',
+        #             name='2-2',
+        #             description='plan description',
+        #         )
+        #     ],
+        #     plan_updateable=True,
+        # )
 
     def provision(self,
                   instance_id: str,

@@ -1,0 +1,16 @@
+{{- if .Values.repositories }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: drycc-helmbroker-cm
+  labels:
+    heritage: drycc
+  annotations:
+    component.drycc.cc/version: {{ .Values.image_tag }}
+data:
+    repositories:
+    {{- range .Values.repositories }}
+    - name: {{ .name }}
+      url: {{ .url }}
+    {{- end }}
+{{- end }}

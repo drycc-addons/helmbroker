@@ -1,0 +1,19 @@
+image_org: "drycc"
+image_tag: "canary"
+image_registry: "docker.io"
+image_pull_policy: "Always"
+replicas: 1
+# limits_cpu: "100m"
+# limits_memory: "50Mi"
+
+## config the helm-broker repositories
+repositories: {}
+#- name: drycc-helm-broker
+#  url: http://helm-broker.drycc.cc/index-drycc.yaml
+
+persistence:
+  enabled: false
+  accessMode: ReadWriteOnce
+  size: 5Gi
+  storageClass: ""
+  volumeName: ""
