@@ -33,6 +33,7 @@ htmlcov/
 
 # python virtual environments for testing
 venv/
+.venv/
 
 # vendored go source code
 vendor/
