@@ -2,13 +2,13 @@ import os
 import shutil
 from typing import Union, List
 from openbrokerapi import api
-from openbrokerapi.api import ServiceBroker, ErrInstanceAlreadyExists, ErrAsyncRequired
+from openbrokerapi.api import ServiceBroker, ErrInstanceAlreadyExists, ErrAsyncRequired, ErrInstanceDoesNotExist
 from openbrokerapi.service_broker import *
 
-from .meta import InstanceMeta
+from .meta import InstanceMeta, load_instance_meta
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
     get_addon_path, get_addon_name
-from .tasks import provision, bind
+from .tasks import provision, bind, deprovision
 from helmbroker.loader import read_addons_file
 
 
@@ -35,7 +35,7 @@ class HelmServiceBroker(ServiceBroker):
         addon_chart_path, addon_plan_path = get_addon_path(details.service_id, details.plan_id)
         shutil.copy(addon_chart_path, chart_path)
         shutil.copy(addon_plan_path, plan_path)
-        provision.delay(instance_id, details, async_allowed, **kwargs)
+        provision.delay(instance_id, details)
         return ProvisionedServiceSpec(state=ProvisionState.IS_ASYNC)
     
 
@@ -91,10 +91,14 @@ class HelmServiceBroker(ServiceBroker):
                     details: DeprovisionDetails,
                     async_allowed: bool,
                     **kwargs) -> DeprovisionServiceSpec:
-        # Delete service instance
-        # ...
+        instance_path = get_instance_path(instance_id)
+        if not os.path.exists(instance_path):
+            raise ErrInstanceDoesNotExist("Instance %s not exists" % instance_id)
+        if not async_allowed:
+            raise ErrAsyncRequired()
 
-        return DeprovisionServiceSpec(is_async=False)
+        deprovision.delay(instance_id, details)
+        return DeprovisionServiceSpec(state=ProvisionState.IS_ASYNC)
 
 
     def last_operation(self,
@@ -102,12 +106,8 @@ class HelmServiceBroker(ServiceBroker):
                        operation_data: Optional[str],
                        **kwargs
                        ) -> LastOperation:
-        """
-        Further readings `CF Broker API#LastOperation <https://docs.cloudfoundry.org/services/api.html#polling>`_
-
-        :param instance_id: Instance id provided by the platform
-        :param operation_data: Operation data received from async operation
-        :param kwargs: May contain additional information, improves compatibility with upstream versions
-        :rtype: LastOperation
-        """
-        raise NotImplementedError()
+        data = load_instance_meta()
+        return LastOperation(
+            data["last_operation"]["state"],
+            data["last_operation"]["description"]
+        )

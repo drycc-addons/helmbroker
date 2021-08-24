@@ -1,7 +1,6 @@
 import os
 import time
-from .utils import command, get_plan_path, get_chart_path, \
-    get_or_create_instance_meta, get_or_create_binding_meta
+from .utils import command, get_plan_path, get_chart_path, get_or_create_binding_meta
 from .meta import dump_instance_meta
 from openbrokerapi.service_broker import *
 
@@ -69,3 +68,7 @@ def bind(instance_id: str,
             state=ProvisionState.SUCCESSFUL_CREATED,
             operation=config.get("operation", None),
         )
+
+
+def deprovision(instance_id: str, details: DeprovisionDetails):
+    pass
