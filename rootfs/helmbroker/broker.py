@@ -2,8 +2,7 @@ import os
 import shutil
 from typing import Union, List
 from openbrokerapi import api
-from openbrokerapi.api import ServiceBroker
-from openbrokerapi.catalog import ServicePlan
+from openbrokerapi.api import ServiceBroker, ErrInstanceAlreadyExists, ErrAsyncRequired
 from openbrokerapi.service_broker import *
 
 from .meta import InstanceMeta
@@ -28,18 +27,17 @@ class HelmServiceBroker(ServiceBroker):
                   **kwargs) -> ProvisionedServiceSpec:
         instance_path = get_instance_path(instance_id)
         if os.path.exists(instance_path):
-            return ProvisionedServiceSpec(
-                state=ProvisionState.IDENTICAL_ALREADY_EXISTS
-            )
+            raise ErrInstanceAlreadyExists("Instance %s already exists" % instance_id)
+        if not async_allowed:
+            raise ErrAsyncRequired()
         os.makedirs(instance_path, exist_ok=True)
         chart_path, plan_path =get_chart_path(instance_id), get_plan_path(instance_id)
         addon_chart_path, addon_plan_path = get_addon_path(details.service_id, details.plan_id)
         shutil.copy(addon_chart_path, chart_path)
         shutil.copy(addon_plan_path, plan_path)
-        if async_allowed:
-            provision.delay(instance_id, details, async_allowed, **kwargs)
-            return ProvisionedServiceSpec(state=ProvisionState.IS_ASYNC)
-        return provision(instance_id, details, async_allowed, **kwargs)
+        provision.delay(instance_id, details, async_allowed, **kwargs)
+        return ProvisionedServiceSpec(state=ProvisionState.IS_ASYNC)
+    
 
     def get_binding(self,
                     instance_id: str,
@@ -59,17 +57,16 @@ class HelmServiceBroker(ServiceBroker):
         if not (InstanceMeta.load(instance_id) and
                 InstanceMeta.load(instance_id)['last_operation']['state'] == 'Ready'):
             return Binding(state="status error: this instance is not ready")
-
+        if not async_allowed:
+            raise ErrAsyncRequired()
         instance_path = get_instance_path(instance_id)
         if os.path.exists(f'{instance_path}/bind.yaml'):
             return Binding(state=BindState.IDENTICAL_ALREADY_EXISTS)
         chart_path, plan_path =get_chart_path(instance_id), get_plan_path(instance_id)
         addon_name = get_addon_name(details.service_id)
         shutil.copy(f'{plan_path}/bind.yaml', f'{chart_path}/{addon_name}/templates')
-        if async_allowed:
-            bind.delay(instance_id, binding_id, details, async_allowed, **kwargs)
-            return Binding(state=BindState.IS_ASYNC)
-        return bind(instance_id, binding_id, details, async_allowed, **kwargs)
+        bind.delay(instance_id, binding_id, details, async_allowed, **kwargs)
+        return Binding(state=BindState.IS_ASYNC)
 
     def unbind(self,
                instance_id: str,

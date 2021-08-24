@@ -1,14 +1,26 @@
 import os
-import shutil
+import time
 from .utils import command, get_plan_path, get_chart_path, \
     get_or_create_instance_meta, get_or_create_binding_meta
+from .meta import dump_instance_meta
 from openbrokerapi.service_broker import *
 
 
-def provision(instance_id: str,
-              details: ProvisionDetails,
-              async_allowed: bool,
-              **kwargs) -> ProvisionedServiceSpec:
+def provision(instance_id: str, details: ProvisionDetails):
+    data = {
+        "id": instance_id,
+        "details": {
+            "service_id": details.service_id,
+            "plan_id" : details.plan_id,
+            "context" : details.context,
+            "parameters": details.parameters,
+        },
+        "last_operation": {
+            "state": OperationState.IN_PROGRESS,
+            "description": "%s in progress at %s" % (instance_id, time.time())
+        }
+    }
+    dump_instance_meta(data)
     chart_path = get_chart_path(instance_id)
     values_file =  os.path.join(get_plan_path(instance_id), "values.yaml")
     args = [
@@ -18,22 +30,19 @@ def provision(instance_id: str,
         "--namespace",
         details.context["namespace"],
         "--create-namespace",
-        "--output",
         "--wait",
         "--timeout 30m0s"
         "-f",
         values_file
     ]
+
     status, output = command("helm", *args)
     if status != 0:
-        return ProvisionedServiceSpec(state="status error: %s" % status, operation=output)
+        data["last_operation"]["state"] = OperationState.FAILED
+        data["last_operation"]["description"] = output
     else:
-        config = get_or_create_instance_meta(instance_id)
-        return ProvisionedServiceSpec(
-            dashboard_url=config.get("dashboard_url", None),
-            state=ProvisionState.SUCCESSFUL_CREATED,
-            operation=config.get("operation", None),
-        )
+        data["last_operation"]["state"] = OperationState.SUCCEEDED
+        data["last_operation"]["description"] = "succeeded at %s" % time.time()
 
 
 def bind(instance_id: str,
