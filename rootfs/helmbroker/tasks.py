@@ -1,7 +1,9 @@
 import os
 import time
-from .utils import command, get_plan_path, get_chart_path, \
-    get_or_create_instance_meta, get_or_create_binding_meta
+
+import yaml
+
+from .utils import command, get_plan_path, get_chart_path, get_cred_value
 from .meta import dump_instance_meta
 from openbrokerapi.service_broker import *
 
@@ -50,6 +52,17 @@ def bind(instance_id: str,
          details: BindDetails,
          async_allowed: bool,
          **kwargs) -> Binding:
+    data = {
+        "binding_id": binding_id,
+        "credential": {
+        },
+        "last_operation": {
+            "state": OperationState.IN_PROGRESS,
+            "description": "%s in progress at %s" % (binding_id, time.time())
+        }
+    }
+    dump_instance_meta(data)
+
     chart_path = get_chart_path(instance_id)
     values_file =  os.path.join(get_plan_path(instance_id), "values.yaml")
     args = [
@@ -59,13 +72,27 @@ def bind(instance_id: str,
         "-f",
         values_file
     ]
-    status, output = command("helm", *args)  # templates.yaml
+    status, templates = command("helm", *args)  # output: templates.yaml
     if status != 0:
-        return Binding(state="status error: %s" % status, operation=output)
+        data["last_operation"]["state"] = OperationState.FAILED
+        data["last_operation"]["description"] = templates
+
+    credential_template = yaml.load(templates.split('bind.yaml')[1], Loader=yaml.Loader)
+    success_flag = True
+    for _ in credential_template['credential']:
+        status, val = get_cred_value(details.context["namespace"], _['ValueFrom'])
+        if status != 0:
+            success_flag = False
+        data[_['name']] = val
+    if success_flag:
+        data['last_operation'] = {
+            'state': OperationState.SUCCEEDED,
+            'description': OperationState.SUCCESSFUL_BOUND,
+        }
     else:
-        config = get_or_create_binding_meta(binding_id, output.split('bind.yaml')[1])
-        return Binding(
-            credentials=config.get("credential", None),
-            state=ProvisionState.SUCCESSFUL_CREATED,
-            operation=config.get("operation", None),
-        )
+        data['last_operation'] = {
+            'state': OperationState.FAILED,
+            'description': OperationState.FAILED,
+        }
+
+    dump_instance_meta(data)
