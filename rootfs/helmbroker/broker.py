@@ -1,13 +1,11 @@
 import os
 import shutil
-from typing import Union, List
-from openbrokerapi import api
-from openbrokerapi.api import ServiceBroker
+
 from openbrokerapi.errors import ErrInstanceAlreadyExists, ErrAsyncRequired, \
     ErrBindingAlreadyExists, ErrBadRequest, ErrInstanceDoesNotExist
 from openbrokerapi.service_broker import *
 
-from .meta import load_instance_meta, dump_binding_meta
+from .meta import load_instance_meta, load_binding_meta, dump_binding_meta
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
     get_addon_path, get_addon_name
 from .tasks import provision, bind, deprovision
@@ -40,13 +38,15 @@ class HelmServiceBroker(ServiceBroker):
         provision.delay(instance_id, details)
         return ProvisionedServiceSpec(state=ProvisionState.IS_ASYNC)
 
-
     def get_binding(self,
                     instance_id: str,
                     binding_id: str,
                     **kwargs
                     ) -> GetBindingSpec:
-        return GetBindingSpec()
+        data = load_binding_meta(instance_id)
+        return GetBindingSpec(
+            data["credentials"],
+        )
 
     def bind(self,
              instance_id: str,
@@ -77,6 +77,9 @@ class HelmServiceBroker(ServiceBroker):
                async_allowed: bool,
                **kwargs
                ) -> UnbindSpec:
+        instance_path = get_instance_path(instance_id)
+        bind_yaml = f'{instance_path}/bind.yaml'
+        shutil.rmtree(bind_yaml)
         return UnbindSpec(is_async=False)
 
     def update(self,
@@ -113,21 +116,14 @@ class HelmServiceBroker(ServiceBroker):
             data["last_operation"]["description"]
         )
 
-
     def last_binding_operation(self,
                                instance_id: str,
                                binding_id: str,
                                operation_data: Optional[str],
                                **kwargs
                                ) -> LastOperation:
-        """
-        Further readings `CF Broker API#LastOperationForBindings <https://github.com/openservicebrokerapi/servicebroker/blob/v2.14/spec.md#polling-last-operation-for-service-bindings>`_
-        Must be implemented if `Provision`, `Update`, or `Deprovision` are async.
-
-        :param instance_id: Instance id provided by the platform
-        :param binding_id: Binding id provided by the platform
-        :param operation_data: Operation data received from async operation
-        :param kwargs: May contain additional information, improves compatibility with upstream versions
-        :rtype: LastOperation
-        """
-        raise NotImplementedError()
+        data = load_binding_meta(instance_id)
+        return LastOperation(
+            data["last_operation"]["state"],
+            data["last_operation"]["description"]
+        )

@@ -62,7 +62,7 @@ BINDING_META_SCHEMA = {
 
 
 def load_binding_meta(instance_id):
-    file = os.path.join(INSTANCES_PATH, instance_id, "binding.yaml")
+    file = os.path.join(INSTANCES_PATH, instance_id, "binding.json")
     with open(file, 'r') as f:
         data = json.loads(f.read())
         validate(instance=data, schema=INSTANCE_META_SCHEMA)
@@ -70,7 +70,7 @@ def load_binding_meta(instance_id):
 
 
 def dump_binding_meta(instance_id, data):
-    file = os.path.join(INSTANCES_PATH, instance_id, "binding.yaml")
+    file = os.path.join(INSTANCES_PATH, instance_id, "binding.json")
     validate(instance=data, schema=INSTANCE_META_SCHEMA)
     with open(file, "w") as f:
         f.write(json.dumps(data))
