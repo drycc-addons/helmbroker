@@ -1,47 +1,41 @@
 import os
-import yaml
+import json
+from jsonschema import validate
 from .config import INSTANCES_PATH
 
-INSTANCE_META_FILE = os.path.join(INSTANCES_PATH, "instance.yaml")
-
-class InstanceMeta(object):
-    """
-    {
-        "id": "instance_id",
-        "details": {
-            "service_id": "service_id",
-            "plan_id" : "plan_id",
-            "context" : {
-
-            },
-            "parameters": {
-
+INSTANCE_META_FILE = os.path.join(INSTANCES_PATH, "instance.json")
+INSTANCE_META_SCHEMA = {
+    "type" : "object",
+    "properties" : {
+        "id" : {"type" : "string"},
+        "details" : {
+            "type" : "object",
+            "properties": {
+                "service_id": {"type" : "string"},
+                "plan_id" : {"type" : "string"},
+                "context" : {"type" : "object"},
+                "parameters": {"type" : "object"},
             }
         },
         "last_operation": {
-            "state": "Ready",
-            "description": "everything is ok."
+            "type" : "object",
+            "properties": {
+                "state": {"type" : "string"},
+                "description": {"type" : "string"}
+            }
         }
-    }
-    """
-    def __init__(self, id, details, last_operation):
-        self.id = id
-        self.details = details
-        self.last_operation = last_operation
-    
-    @classmethod
-    def load(cls, file=INSTANCE_META_FILE):
-        with open(file) as f:
-            data = yaml.load(f, Loader=yaml.Loader)
-            return cls(data["id"], data["details"], data["last_operation"])
+    },
+}
 
-    def dump(self, file=INSTANCE_META_FILE):
-        with open(file, "w") as f:
-            yaml.dump(
-                {
-                    "id": self.id,
-                    "details": self.details,
-                    "last_operation": self.last_operation
-                },
-                Loader=yaml.Loader
-            )
+
+def load_instance_meta(file=INSTANCE_META_FILE):
+    with open(file) as f:
+        data = json.load(f)
+        validate(instance=data, schema=INSTANCE_META_SCHEMA)
+        return data
+
+
+def dump_instance_meta(data, file=INSTANCE_META_FILE):
+    validate(instance=data, schema=INSTANCE_META_SCHEMA)
+    with open(file, "w") as f:
+        json.dump(f, data)
