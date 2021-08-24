@@ -6,8 +6,10 @@ from openbrokerapi.api import ServiceBroker
 from openbrokerapi.catalog import ServicePlan
 from openbrokerapi.service_broker import *
 
-from .utils import get_instance_path, get_chart_path, get_plan_path, get_addon_path
-from .tasks import provision
+from .meta import InstanceMeta
+from .utils import get_instance_path, get_chart_path, get_plan_path, \
+    get_addon_path, get_addon_name
+from .tasks import provision, bind
 from helmbroker.loader import read_addons_file
 
 
@@ -17,26 +19,7 @@ class HelmServiceBroker(ServiceBroker):
         services = read_addons_file()
         return [Service(
             **addons
-        ) for _,addons in services.items()]
-        # return Service(
-        #     id='server',
-        #     name='server',
-        #     description='service description',
-        #     bindable=True,
-        #     plans=[
-        #         ServicePlan(
-        #             id='server-1:1-1',
-        #             name='1-1',
-        #             description='plan description',
-        #         ),
-        #         ServicePlan(
-        #             id='server-2:2-2',
-        #             name='2-2',
-        #             description='plan description',
-        #         )
-        #     ],
-        #     plan_updateable=True,
-        # )
+        ) for _, addons in services.items()]
 
     def provision(self,
                   instance_id: str,
@@ -54,9 +37,9 @@ class HelmServiceBroker(ServiceBroker):
         shutil.copy(addon_chart_path, chart_path)
         shutil.copy(addon_plan_path, plan_path)
         if async_allowed:
-            provision.delay(instance_id, details. async_allowed, **kwargs)
+            provision.delay(instance_id, details, async_allowed, **kwargs)
             return ProvisionedServiceSpec(state=ProvisionState.IS_ASYNC)
-        return provision(instance_id, details. async_allowed, **kwargs)
+        return provision(instance_id, details, async_allowed, **kwargs)
 
     def get_binding(self,
                     instance_id: str,
@@ -72,7 +55,21 @@ class HelmServiceBroker(ServiceBroker):
              async_allowed: bool,
              **kwargs
              ) -> Binding:
-        return Binding(credentials={"url": "postgres://1.1.1.1", "passwd": "123"})
+
+        if not (InstanceMeta.load(instance_id) and
+                InstanceMeta.load(instance_id)['last_operation']['state'] == 'Ready'):
+            return Binding(state="status error: this instance is not ready")
+
+        instance_path = get_instance_path(instance_id)
+        if os.path.exists(f'{instance_path}/bind.yaml'):
+            return Binding(state=BindState.IDENTICAL_ALREADY_EXISTS)
+        chart_path, plan_path =get_chart_path(instance_id), get_plan_path(instance_id)
+        addon_name = get_addon_name(details.service_id)
+        shutil.copy(f'{plan_path}/bind.yaml', f'{chart_path}/{addon_name}/templates')
+        if async_allowed:
+            bind.delay(instance_id, binding_id, details, async_allowed, **kwargs)
+            return Binding(state=BindState.IS_ASYNC)
+        return bind(instance_id, binding_id, details, async_allowed, **kwargs)
 
     def unbind(self,
                instance_id: str,

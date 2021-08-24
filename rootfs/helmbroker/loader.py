@@ -21,6 +21,8 @@ def download_file(url, dest):
 
 def read_addons_file():
     data = read_file(f'{ADDONS_PATH}/addons.yaml')
+    if not data:
+        return {}
     addons_info = yaml.load(data, Loader=yaml.Loader)
     return addons_info
 
@@ -69,8 +71,7 @@ def addons_meta_file():
             plans_meta.append(meta_file.split('/')[1:])
     addons_dict = {}
     for addon_meta in addons_meta:
-        with open(f'{ADDONS_PATH}/{"/".join(addon_meta)}',
-                  'r') as f:
+        with open(f'{ADDONS_PATH}/{"/".join(addon_meta)}', 'r') as f:
             meta = yaml.load(f.read(), Loader=yaml.Loader)
             meta['plans'] = []
             addons_dict[meta['name']] = meta
