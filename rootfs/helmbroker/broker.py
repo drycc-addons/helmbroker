@@ -7,7 +7,7 @@ from openbrokerapi.errors import ErrInstanceAlreadyExists, ErrAsyncRequired, \
     ErrBindingAlreadyExists, ErrBadRequest, ErrInstanceDoesNotExist
 from openbrokerapi.service_broker import *
 
-from .meta import load_instance_meta
+from .meta import load_instance_meta, dump_binding_meta
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
     get_addon_path, get_addon_name
 from .tasks import provision, bind, deprovision
@@ -55,7 +55,7 @@ class HelmServiceBroker(ServiceBroker):
              async_allowed: bool,
              **kwargs
              ) -> Binding:
-        instance_meta = load_instance_meta(instance_id)
+        instance_meta = dump_binding_meta(instance_id)
         if not (instance_meta and
                 instance_meta['last_operation']['state'] == 'Ready'):
             raise ErrBadRequest(msg="This instance %s is not ready" % instance_id)
@@ -107,7 +107,7 @@ class HelmServiceBroker(ServiceBroker):
                        operation_data: Optional[str],
                        **kwargs
                        ) -> LastOperation:
-        data = load_instance_meta()
+        data = load_instance_meta(instance_id)
         return LastOperation(
             data["last_operation"]["state"],
             data["last_operation"]["description"]

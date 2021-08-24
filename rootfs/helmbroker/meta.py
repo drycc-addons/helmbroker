@@ -3,8 +3,6 @@ import json
 from jsonschema import validate
 from .config import INSTANCES_PATH
 
-INSTANCE_META_FILE = os.path.join(INSTANCES_PATH, "instance.json")
-BINDING_META_FILE = os.path.join(INSTANCES_PATH, "binding.yaml")
 
 INSTANCE_META_SCHEMA = {
     "type": "object",
@@ -30,14 +28,16 @@ INSTANCE_META_SCHEMA = {
 }
 
 
-def load_instance_meta(file=INSTANCE_META_FILE):
+def load_instance_meta(instance_id):
+    file = os.path.join(INSTANCES_PATH, instance_id, "instance.json")
     with open(file) as f:
         data = json.load(f)
         validate(instance=data, schema=INSTANCE_META_SCHEMA)
         return data
 
 
-def dump_instance_meta(data, file=INSTANCE_META_FILE):
+def dump_instance_meta(instance_id, data):
+    file = os.path.join(INSTANCES_PATH, instance_id, "instance.json")
     validate(instance=data, schema=INSTANCE_META_SCHEMA)
     with open(file, "w") as f:
         json.dump(f, data)
@@ -61,14 +61,16 @@ BINDING_META_SCHEMA = {
 }
 
 
-def load_binding_meta(file=BINDING_META_FILE):
+def load_binding_meta(instance_id):
+    file = os.path.join(INSTANCES_PATH, instance_id, "binding.yaml")
     with open(file, 'r') as f:
         data = json.loads(f.read())
         validate(instance=data, schema=INSTANCE_META_SCHEMA)
         return data
 
 
-def dump_binding_meta(data, file=BINDING_META_FILE):
+def dump_binding_meta(instance_id, data):
+    file = os.path.join(INSTANCES_PATH, instance_id, "binding.yaml")
     validate(instance=data, schema=INSTANCE_META_SCHEMA)
     with open(file, "w") as f:
         f.write(json.dumps(data))

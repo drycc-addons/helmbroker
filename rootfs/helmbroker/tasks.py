@@ -3,7 +3,7 @@ import time
 import yaml
 
 from .utils import command, get_plan_path, get_chart_path, get_cred_value
-from .meta import dump_instance_meta
+from .meta import dump_instance_meta, dump_binding_meta
 from openbrokerapi.service_broker import *
 
 
@@ -21,7 +21,7 @@ def provision(instance_id: str, details: ProvisionDetails):
             "description": "%s in progress at %s" % (instance_id, time.time())
         }
     }
-    dump_instance_meta(data)
+    dump_instance_meta(instance_id, data)
     chart_path = get_chart_path(instance_id)
     values_file =  os.path.join(get_plan_path(instance_id), "values.yaml")
     args = [
@@ -60,7 +60,7 @@ def bind(instance_id: str,
             "description": "%s in progress at %s" % (binding_id, time.time())
         }
     }
-    dump_instance_meta(data)
+    dump_binding_meta(instance_id, data)
 
     chart_path = get_chart_path(instance_id)
     values_file =  os.path.join(get_plan_path(instance_id), "values.yaml")
@@ -93,7 +93,7 @@ def bind(instance_id: str,
             'state': OperationState.FAILED,
             'description': OperationState.FAILED,
         }
-    dump_instance_meta(data)
+    dump_binding_meta(instance_id, data)
 
 
 def deprovision(instance_id: str, details: DeprovisionDetails):
