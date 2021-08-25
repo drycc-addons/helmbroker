@@ -14,7 +14,7 @@ metadata:
     {{- end }}
 spec:
   rules:
-  - host: drycc.{{ .Values.platform_domain }}
+  - host: drycc-helmbroker.{{ .Values.platform_domain }}
     http:
       paths:
       - pathType: Prefix
@@ -32,5 +32,5 @@ spec:
   tls:
     - secretName: drycc-helmbroker-certificate-auto
       hosts:
-        - drycc.{{ .Values.platform_domain }}
+        - drycc-helmbroker.{{ .Values.platform_domain }}
   {{- end }}

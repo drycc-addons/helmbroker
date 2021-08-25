@@ -3,10 +3,12 @@ import time
 import yaml
 import shutil
 
+from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
+    UpdateDetails, BindDetails
+
 from .config import INSTANCES_PATH
 from .utils import command, get_plan_path, get_chart_path, get_cred_value
 from .meta import dump_instance_meta, dump_binding_meta, load_instance_meta
-from openbrokerapi.service_broker import *
 
 
 def provision(instance_id: str, details: ProvisionDetails):
@@ -14,18 +16,18 @@ def provision(instance_id: str, details: ProvisionDetails):
         "id": instance_id,
         "details": {
             "service_id": details.service_id,
-            "plan_id" : details.plan_id,
-            "context" : details.context,
+            "plan_id": details.plan_id,
+            "context": details.context,
             "parameters": details.parameters,
         },
         "last_operation": {
             "state": OperationState.IN_PROGRESS,
-            "description": "provision %s in progress at %s" % (instance_id, time.time())
+            "description": "provision %s in progress at %s" % (instance_id, time.time())  # noqa
         }
     }
     dump_instance_meta(instance_id, data)
     chart_path = get_chart_path(instance_id)
-    values_file =  os.path.join(get_plan_path(instance_id), "values.yaml")
+    values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
     args = [
         "install",
         details.context["instance_name"],
@@ -45,7 +47,7 @@ def provision(instance_id: str, details: ProvisionDetails):
         data["last_operation"]["description"] = "provision error:\n%s" % output
     else:
         data["last_operation"]["state"] = OperationState.SUCCEEDED
-        data["last_operation"]["description"] = "provision succeeded at %s" % time.time()
+        data["last_operation"]["description"] = "provision succeeded at %s" % time.time()  # noqa
 
 
 def update(instance_id: str, details: UpdateDetails):
@@ -53,13 +55,13 @@ def update(instance_id: str, details: UpdateDetails):
         "id": instance_id,
         "details": {
             "service_id": details.service_id,
-            "plan_id" : details.plan_id,
-            "context" : details.context,
+            "plan_id": details.plan_id,
+            "context": details.context,
             "parameters": details.parameters,
         },
         "last_operation": {
             "state": OperationState.IN_PROGRESS,
-            "description": "update %s in progress at %s" % (instance_id, time.time())
+            "description": "update %s in progress at %s" % (instance_id, time.time())  # noqa
         }
     }
     dump_instance_meta(instance_id, data)
@@ -81,10 +83,10 @@ def update(instance_id: str, details: UpdateDetails):
     status, output = command("helm", *args)
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED
-        data["last_operation"]["description"] = "update %s failed: %s" % (instance_id, output)
+        data["last_operation"]["description"] = "update %s failed: %s" % (instance_id, output)  # noqa
     else:
         data["last_operation"]["state"] = OperationState.SUCCEEDED
-        data["last_operation"]["description"] = "update %s succeeded at %s" % (instance_id, time.time())
+        data["last_operation"]["description"] = "update %s succeeded at %s" % (instance_id, time.time())  # noqa
 
 
 def bind(instance_id: str,
@@ -98,13 +100,13 @@ def bind(instance_id: str,
         },
         "last_operation": {
             "state": OperationState.IN_PROGRESS,
-            "description": "binding %s in progress at %s" % (binding_id, time.time())
+            "description": "binding %s in progress at %s" % (binding_id, time.time())  # noqa
         }
     }
     dump_binding_meta(instance_id, data)
 
     chart_path = get_chart_path(instance_id)
-    values_file =  os.path.join(get_plan_path(instance_id), "values.yaml")
+    values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
     args = [
         "template",
         details.context["instance_name"],
@@ -115,13 +117,13 @@ def bind(instance_id: str,
     status, templates = command("helm", *args)  # output: templates.yaml
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED
-        data["last_operation"]["description"] = "binding %s failed: %s" % (instance_id, templates)
+        data["last_operation"]["description"] = "binding %s failed: %s" % (instance_id, templates)  # noqa
 
-    credential_template = yaml.load(templates.split('bind.yaml')[1], Loader=yaml.Loader)
+    credential_template = yaml.load(templates.split('bind.yaml')[1], Loader=yaml.Loader)  # noqa
     success_flag = True
     errors = []
     for _ in credential_template['credential']:
-        status, val = get_cred_value(details.context["namespace"], _['ValueFrom'])
+        status, val = get_cred_value(details.context["namespace"], _['ValueFrom'])  # noqa
         if status != 0:
             success_flag = False
             errors.append(val)
@@ -129,12 +131,12 @@ def bind(instance_id: str,
     if success_flag:
         data['last_operation'] = {
             'state': OperationState.SUCCEEDED,
-            'description': "binding %s succeeded at %s" % (instance_id, time.time())
+            'description': "binding %s succeeded at %s" % (instance_id, time.time())  # noqa
         }
     else:
         data['last_operation'] = {
             'state': OperationState.FAILED,
-            'description': "binding %s failed: %s" % (instance_id, ','.join(errors))
+            'description': "binding %s failed: %s" % (instance_id, ','.join(errors))  # noqa
         }
     dump_binding_meta(instance_id, data)
 
@@ -142,8 +144,8 @@ def bind(instance_id: str,
 def deprovision(instance_id: str):
     data = load_instance_meta(instance_id)
     data["last_operation"]["state"] = OperationState.IN_PROGRESS
-    data["last_operation"]["description"] = "deprovision %s in progress at %s" % (instance_id, time.time())
-    dump_instance_meta(instance_id)
+    data["last_operation"]["description"] = "deprovision %s in progress at %s" % (instance_id, time.time())  # noqa
+    dump_instance_meta(instance_id, data)
     command(
         "helm",
         "uninstall",
@@ -151,11 +153,11 @@ def deprovision(instance_id: str):
         "--namespace",
         data["details"]["context"]["namespace"],
     )
-    status, output = command("kubectl", "delete", "ns", data["details"]["context"]["namespace"])
+    status, output = command("kubectl", "delete", "ns", data["details"]["context"]["namespace"])  # noqa
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED
-        data["last_operation"]["description"] = "deprovision error:\n%s" % output
+        data["last_operation"]["description"] = "deprovision error:\n%s" % output  # noqa
     else:
         data["last_operation"]["state"] = OperationState.SUCCEEDED
-        data["last_operation"]["description"] = "deprovision succeeded at %s" % time.time()
-        shutil.rmtree(os.path.join(INSTANCES_PATH, instance_id), ignore_errors=True)
+        data["last_operation"]["description"] = "deprovision succeeded at %s" % time.time()  # noqa
+        shutil.rmtree(os.path.join(INSTANCES_PATH, instance_id), ignore_errors=True)  # noqa

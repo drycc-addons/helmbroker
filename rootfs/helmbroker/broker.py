@@ -1,11 +1,16 @@
 import os
 import shutil
+from typing import Union, List, Optional
 
 from openbrokerapi.errors import ErrInstanceAlreadyExists, ErrAsyncRequired, \
     ErrBindingAlreadyExists, ErrBadRequest, ErrInstanceDoesNotExist
-from openbrokerapi.service_broker import *
+from openbrokerapi.service_broker import ServiceBroker, Service, \
+    ProvisionDetails, ProvisionedServiceSpec, ProvisionState, GetBindingSpec, \
+    BindDetails, Binding, BindState, UnbindDetails, UnbindSpec, \
+    UpdateDetails, UpdateServiceSpec, DeprovisionDetails, \
+    DeprovisionServiceSpec, LastOperation
 
-from .meta import load_instance_meta, load_binding_meta, dump_binding_meta
+from .meta import load_instance_meta, load_binding_meta
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
     get_addon_path, get_addon_name, get_addon_updateable, get_addon_bindable
 from .tasks import provision, bind, deprovision, update
@@ -27,12 +32,12 @@ class HelmServiceBroker(ServiceBroker):
                   **kwargs) -> ProvisionedServiceSpec:
         instance_path = get_instance_path(instance_id)
         if os.path.exists(instance_path):
-            raise ErrInstanceAlreadyExists("Instance %s already exists" % instance_id)
+            raise ErrInstanceAlreadyExists("Instance %s already exists" % instance_id)  # noqa
         if not async_allowed:
             raise ErrAsyncRequired()
         os.makedirs(instance_path, exist_ok=True)
-        chart_path, plan_path =get_chart_path(instance_id), get_plan_path(instance_id)
-        addon_chart_path, addon_plan_path = get_addon_path(details.service_id, details.plan_id)
+        chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)  # noqa
+        addon_chart_path, addon_plan_path = get_addon_path(details.service_id, details.plan_id)  # noqa
         shutil.copy(addon_chart_path, chart_path)
         shutil.copy(addon_plan_path, plan_path)
         provision.delay(instance_id, details)
@@ -61,15 +66,15 @@ class HelmServiceBroker(ServiceBroker):
         instance_meta = load_instance_meta(instance_id)
         if not (instance_meta and
                 instance_meta['last_operation']['state'] == 'Ready'):
-            raise ErrBadRequest(msg="This instance %s is not ready" % instance_id)
+            raise ErrBadRequest(msg="This instance %s is not ready" % instance_id)  # noqa
         if not async_allowed:
             raise ErrAsyncRequired()
         instance_path = get_instance_path(instance_id)
         if os.path.exists(f'{instance_path}/bind.yaml'):
             raise ErrBindingAlreadyExists()
-        chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)
+        chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)  # noqa
         addon_name = get_addon_name(details.service_id)
-        shutil.copy(f'{plan_path}/bind.yaml', f'{chart_path}/{addon_name}/templates')
+        shutil.copy(f'{plan_path}/bind.yaml', f'{chart_path}/{addon_name}/templates')  # noqa
         bind.delay(instance_id, binding_id, details, async_allowed, **kwargs)
         return Binding(state=BindState.IS_ASYNC)
 
@@ -96,13 +101,13 @@ class HelmServiceBroker(ServiceBroker):
             raise ErrBadRequest("Instance %s does not exist" % instance_id)
         is_plan_updateable = get_addon_updateable(instance_id)
         if not is_plan_updateable:
-            raise ErrBadRequest("Instance %s does not updateable" % instance_id)
+            raise ErrBadRequest("Instance %s does not updateable" % instance_id)  # noqa
         if not async_allowed:
             raise ErrAsyncRequired()
         plan_path = get_plan_path(instance_id)
         # delete the pre plan
         shutil.rmtree(plan_path)
-        _, addon_plan_path = get_addon_path(details.service_id, details.plan_id)
+        _, addon_plan_path = get_addon_path(details.service_id, details.plan_id)  # noqa
         # add the new plan
         shutil.copy(addon_plan_path, plan_path)
         update.delay(instance_id, details)
@@ -115,7 +120,7 @@ class HelmServiceBroker(ServiceBroker):
                     **kwargs) -> DeprovisionServiceSpec:
         instance_path = get_instance_path(instance_id)
         if not os.path.exists(instance_path):
-            raise ErrInstanceDoesNotExist("Instance %s not exists" % instance_id)
+            raise ErrInstanceDoesNotExist("Instance %s not exists" % instance_id)  # noqa
         if not async_allowed:
             raise ErrAsyncRequired()
 

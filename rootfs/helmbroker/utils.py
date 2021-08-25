@@ -8,7 +8,7 @@ from .meta import load_addons_meta
 
 
 def command(cmd, *args, output_type="text"):
-    status, output = subprocess.getstatusoutput("%s %s" % (cmd, " ".join(args)))
+    status, output = subprocess.getstatusoutput("%s %s" % (cmd, " ".join(args))) # noqa
     if output_type == "yaml":
         return yaml.load(output, Loader=yaml.Loader)
     elif output_type == "json":
@@ -16,9 +16,9 @@ def command(cmd, *args, output_type="text"):
     return status, output
 
 
-get_instance_path = lambda instance_id: os.path.join(INSTANCES_PATH, instance_id)
-get_chart_path = lambda instance_id: os.path.join(get_instance_path(instance_id), "chart")
-get_plan_path = lambda instance_id: os.path.join(get_instance_path(instance_id), "plan")
+get_instance_path = lambda instance_id: os.path.join(INSTANCES_PATH, instance_id) # noqa
+get_chart_path = lambda instance_id: os.path.join(get_instance_path(instance_id), "chart") # noqa
+get_plan_path = lambda instance_id: os.path.join(get_instance_path(instance_id), "plan") # noqa
 
 
 def get_addon_path(service_id, plan_id):
@@ -67,20 +67,20 @@ def get_cred_value(ns, source):
 
 def get_service_key_value(ns, service_ref):
     args = [
-        "get", "svc", service_ref['name'], "-n", ns, '-o', f'jsonpath="{service_ref["jsonpath"]}"',
+        "get", "svc", service_ref['name'], "-n", ns, '-o', f'jsonpath="{service_ref["jsonpath"]}"', # noqa
     ]
     return command("kubectl", *args)
 
 
 def get_config_map_key_value(ns, config_map_ref):
     args = [
-        "get", "cm", config_map_ref['name'], "-n", ns, '-o', f'jsonpath="{config_map_ref["jsonpath"]}"',
+        "get", "cm", config_map_ref['name'], "-n", ns, '-o', f'jsonpath="{config_map_ref["jsonpath"]}"', # noqa
     ]
     return command("kubectl", *args)
 
 
 def get_secret_key_value(ns, secret_ref):
     args = [
-        "get", "secret", secret_ref['name'], "-n", ns, '-o', f'jsonpath="{secret_ref["jsonpath"]}"',
+        "get", "secret", secret_ref['name'], "-n", ns, '-o', f'jsonpath="{secret_ref["jsonpath"]}"', # noqa
     ]
     return command("kubectl", *args)
