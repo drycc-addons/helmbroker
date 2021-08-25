@@ -4,6 +4,10 @@ COPY requirements.txt /app/requirements.txt
 
 ENV PATH="/app/.venv/bin:${PATH}"
 
+COPY . /app
+
+WORKDIR /app
+
 RUN apk add --update --virtual .build-deps \
     musl-dev \
     openssl-dev \
@@ -21,10 +25,10 @@ RUN apk add --update --virtual .build-deps \
     su-exec \
     bash \
     shadow \
-  && apk del .build-deps
+    curl \
+  && apk del .build-deps \
+  && chmod +x /app/bin/* \
+  && /app/bin/install
 
-COPY . /app
-
-WORKDIR /app
 CMD ["/app/bin/boot"]
 EXPOSE 8000
