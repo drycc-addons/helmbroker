@@ -22,6 +22,7 @@ RUN apk add --update --virtual .build-deps \
     )" \
   && apk add --update --virtual .helmbroker-rundeps \
     $runDeps \
+    git \
     ca-certificates \
     su-exec \
     bash \

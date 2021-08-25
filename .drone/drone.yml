@@ -12,7 +12,7 @@ steps:
   pull: always
   privileged: true
   commands:
-  - make test-style docker-build-test
+  - make test-style
   environment:
     VERSION: ${DRONE_TAG:-latest}-linux-amd64
     DEV_REGISTRY: ${DEV_REGISTRY:-docker.io}

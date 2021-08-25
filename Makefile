@@ -43,9 +43,6 @@ deploy: check-kubectl docker-build docker-push
 clean: check-docker
 	docker rmi $(IMAGE)
 
-commit-hook:
-	cp _scripts/util/commit-msg .git/hooks/commit-msg
-
 full-clean: check-docker
 	docker images -q $(IMAGE_PREFIX)/$(COMPONENT) | xargs docker rmi -f
 
@@ -56,7 +53,7 @@ test-style: docker-build-test
 	${SHELLCHECK_PREFIX} $(SHELL_SCRIPTS)
 
 test-unit: docker-build-test
-	docker run -v ${CURDIR}:/test -w /test/rootfs ${IMAGE}.test /test/rootfs/bin/test-unit
+	@echo "Implement in the future"
 
 test-functional:
 	@echo "Implement functional tests in _tests directory"
