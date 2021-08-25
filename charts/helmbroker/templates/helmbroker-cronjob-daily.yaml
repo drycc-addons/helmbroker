@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: drycc-helmbroker-cronjob-daily
+  labels:
+    heritage: drycc
+  annotations:
+    component.drycc.cc/version: {{ .Values.image_tag }}
+spec:
+  schedule: "0 0 * * *"
+  concurrencyPolicy: {{ .Values.concurrency_policy }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          serviceAccount: drycc-helmbroker
+          containers:
+          - image: {{.Values.image_registry}}/{{.Values.image_org}}/helmbroker:{{.Values.image_tag}}
+            imagePullPolicy: {{.Values.image_pull_policy}}
+            name: drycc-helmbroker-cleaner
+            command: ['python', '-m', 'helmbroker.cleaner']
+            {{- include "helmbroker.envs" . | indent 12 }}
+            {{- include "helmbroker.volumeMounts" . | indent 12 }}
+          {{- include "helmbroker.volumes" . | indent 10 }}
