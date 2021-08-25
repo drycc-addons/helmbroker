@@ -33,11 +33,21 @@ def get_addon_path(service_id, plan_id):
     return service_path, plan_path
 
 
-def get_addon_name(service_id):
+def get_addon_meta(service_id):
     services = read_addons_file()
     service = [addon for addon in [addons for _, addons in services.items()]
                if addon['id'] == service_id][0]
+    return service
+
+
+def get_addon_name(service_id):
+    service = get_addon_meta(service_id)
     return service['name']
+
+
+def get_addon_updateable(service_id):
+    service = get_addon_meta(service_id)
+    return service.get('plan_updateable', False)
 
 
 def get_cred_value(ns, source):

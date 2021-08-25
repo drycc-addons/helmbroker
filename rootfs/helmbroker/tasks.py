@@ -46,6 +46,45 @@ def provision(instance_id: str, details: ProvisionDetails):
         data["last_operation"]["description"] = "provision succeeded at %s" % time.time()
 
 
+def update(instance_id: str, details: UpdateDetails):
+    data = {
+        "id": instance_id,
+        "details": {
+            "service_id": details.service_id,
+            "plan_id" : details.plan_id,
+            "context" : details.context,
+            "parameters": details.parameters,
+        },
+        "last_operation": {
+            "state": OperationState.IN_PROGRESS,
+            "description": "%s in progress at %s" % (instance_id, time.time())
+        }
+    }
+    dump_instance_meta(instance_id, data)
+    chart_path = get_chart_path(instance_id)
+    values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
+    args = [
+        "upgrade",
+        details.context["instance_name"],
+        chart_path,
+        "--namespace",
+        details.context["namespace"],
+        "--create-namespace",
+        "--wait",
+        "--timeout 30m0s"
+        "-f",
+        values_file
+    ]
+
+    status, output = command("helm", *args)
+    if status != 0:
+        data["last_operation"]["state"] = OperationState.FAILED
+        data["last_operation"]["description"] = output
+    else:
+        data["last_operation"]["state"] = OperationState.SUCCEEDED
+        data["last_operation"]["description"] = "succeeded at %s" % time.time()
+
+
 def bind(instance_id: str,
          binding_id: str,
          details: BindDetails,
