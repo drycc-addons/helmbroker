@@ -12,7 +12,7 @@ steps:
   pull: always
   privileged: true
   commands:
-  - make test-style upload-coverage
+  - make test-style docker-build-test upload-coverage
   environment:
     VERSION: ${DRONE_TAG:-latest}-linux-amd64
     DEV_REGISTRY: ${DEV_REGISTRY:-docker.io}
