@@ -116,7 +116,7 @@ class HelmServiceBroker(ServiceBroker):
         if not async_allowed:
             raise ErrAsyncRequired()
 
-        deprovision.delay(instance_id, details)
+        deprovision.delay(instance_id)
         return DeprovisionServiceSpec(is_async=True)
 
     def last_operation(self,

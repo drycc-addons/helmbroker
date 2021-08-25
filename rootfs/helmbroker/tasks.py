@@ -1,7 +1,9 @@
 import os
 import time
 import yaml
+import shutil
 
+from .config import INSTANCES_PATH
 from .utils import command, get_plan_path, get_chart_path, get_cred_value
 from .meta import dump_instance_meta, dump_binding_meta, load_instance_meta
 from openbrokerapi.service_broker import *
@@ -137,7 +139,7 @@ def bind(instance_id: str,
     dump_binding_meta(instance_id, data)
 
 
-def deprovision(instance_id: str, details: DeprovisionDetails):
+def deprovision(instance_id: str):
     data = load_instance_meta(instance_id)
     data["last_operation"]["state"] = OperationState.IN_PROGRESS
     data["last_operation"]["description"] = "deprovision %s in progress at %s" % (instance_id, time.time())
@@ -156,3 +158,4 @@ def deprovision(instance_id: str, details: DeprovisionDetails):
     else:
         data["last_operation"]["state"] = OperationState.SUCCEEDED
         data["last_operation"]["description"] = "deprovision succeeded at %s" % time.time()
+        shutil.rmtree(os.path.join(INSTANCES_PATH, instance_id), ignore_errors=True)

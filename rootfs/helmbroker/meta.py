@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from jsonschema import validate
 from .config import INSTANCES_PATH
 
@@ -23,7 +24,8 @@ INSTANCE_META_SCHEMA = {
                 "state": {"type": "string"},
                 "description": {"type": "string"}
             }
-        }
+        },
+        "last_modified_time": {"type": "number"}
     },
 }
 
@@ -37,6 +39,7 @@ def load_instance_meta(instance_id):
 
 
 def dump_instance_meta(instance_id, data):
+    data["last_modified_time "] = time.time()
     file = os.path.join(INSTANCES_PATH, instance_id, "instance.json")
     validate(instance=data, schema=INSTANCE_META_SCHEMA)
     with open(file, "w") as f:
@@ -56,7 +59,8 @@ BINDING_META_SCHEMA = {
                 "state": {"type": "string"},
                 "description": {"type": "string"}
             }
-        }
+        },
+        "last_modified_time": {"type": "number"}
     }
 }
 
@@ -70,6 +74,7 @@ def load_binding_meta(instance_id):
 
 
 def dump_binding_meta(instance_id, data):
+    data["last_modified_time "] = time.time()
     file = os.path.join(INSTANCES_PATH, instance_id, "binding.json")
     validate(instance=data, schema=INSTANCE_META_SCHEMA)
     with open(file, "w") as f:
