@@ -4,7 +4,7 @@ import json
 import subprocess
 
 from .config import INSTANCES_PATH, ADDONS_PATH
-from .loader import read_addons_file
+from .meta import load_addons_meta
 
 
 def command(cmd, *args, output_type="text"):
@@ -22,7 +22,7 @@ get_plan_path = lambda instance_id: os.path.join(get_instance_path(instance_id),
 
 
 def get_addon_path(service_id, plan_id):
-    services = read_addons_file()
+    services = load_addons_meta()
     service = [addon for addon in [addons for _, addons in services.items()]
                if addon['id'] == service_id][0]
     plan = [plan for plan in service['plans'] if plan['id'] == plan_id][0]
@@ -34,7 +34,7 @@ def get_addon_path(service_id, plan_id):
 
 
 def get_addon_meta(service_id):
-    services = read_addons_file()
+    services = load_addons_meta()
     service = [addon for addon in [addons for _, addons in services.items()]
                if addon['id'] == service_id][0]
     return service
@@ -48,6 +48,11 @@ def get_addon_name(service_id):
 def get_addon_updateable(service_id):
     service = get_addon_meta(service_id)
     return service.get('plan_updateable', False)
+
+
+def get_addon_bindable(service_id):
+    service = get_addon_meta(service_id)
+    return service.get('bindable', False)
 
 
 def get_cred_value(ns, source):

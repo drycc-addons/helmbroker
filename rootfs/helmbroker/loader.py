@@ -4,7 +4,8 @@ import tarfile
 import requests
 import yaml
 
-from helmbroker.config import ADDONS_PATH, CONFIG_PATH, Config
+from .config import ADDONS_PATH, CONFIG_PATH
+from .meta import dump_addons_meta
 
 
 def download_file(url, dest):
@@ -17,14 +18,6 @@ def download_file(url, dest):
     if filename.endswith(".yaml") or filename.endswith(".yml"):
         return yaml.load(file.content.decode(encoding="utf-8"),
                          Loader=yaml.Loader)
-
-
-def read_addons_file():
-    data = read_file(f'{ADDONS_PATH}/addons.yaml')
-    if not data:
-        return {}
-    addons_info = yaml.load(data, Loader=yaml.Loader)
-    return addons_info
 
 
 def read_file(filename):
@@ -80,7 +73,7 @@ def addons_meta_file():
         with open(f'{ADDONS_PATH}/{"/".join(plan_meta)}', 'r') as f:
             addons_mata = yaml.load(f.read(), Loader=yaml.Loader)
             addons_dict[f'{"-".join(plan_meta[0].split("-")[0:-1])}']['plans'].append(addons_mata) # noqa
-    save_file(yaml.dump(addons_dict), ADDONS_PATH, 'addons.yaml')
+    dump_addons_meta(addons_dict)
 
 
 def load_addons(repository):
