@@ -7,8 +7,8 @@ from openbrokerapi.service_broker import *
 
 from .meta import load_instance_meta, load_binding_meta, dump_binding_meta
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
-    get_addon_path, get_addon_name
-from .tasks import provision, bind, deprovision
+    get_addon_path, get_addon_name, get_addon_updateable
+from .tasks import provision, bind, deprovision, update
 from helmbroker.loader import read_addons_file
 
 
@@ -88,8 +88,22 @@ class HelmServiceBroker(ServiceBroker):
                async_allowed: bool,
                **kwargs
                ) -> UpdateServiceSpec:
-        # Update service instnce
-        return ProvisionedServiceSpec()
+        instance_path = get_instance_path(instance_id)
+        if not os.path.exists(instance_path):
+            raise ErrBadRequest("Instance %s does not exist" % instance_id)
+        is_plan_updateable = get_addon_updateable(instance_id)
+        if not is_plan_updateable:
+            raise ErrBadRequest("Instance %s does not updateable" % instance_id)
+        if not async_allowed:
+            raise ErrAsyncRequired()
+        plan_path = get_plan_path(instance_id)
+        # delete the pre plan
+        shutil.rmtree(plan_path)
+        _, addon_plan_path = get_addon_path(details.service_id, details.plan_id)
+        # add the new plan
+        shutil.copy(addon_plan_path, plan_path)
+        update.delay(instance_id, details)
+        return UpdateServiceSpec(is_async=True)
 
     def deprovision(self,
                     instance_id: str,
@@ -103,7 +117,7 @@ class HelmServiceBroker(ServiceBroker):
             raise ErrAsyncRequired()
 
         deprovision.delay(instance_id, details)
-        return DeprovisionServiceSpec(state=ProvisionState.IS_ASYNC)
+        return DeprovisionServiceSpec(is_async=True)
 
     def last_operation(self,
                        instance_id: str,
