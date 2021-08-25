@@ -1,8 +1,7 @@
 import os
 import json
 from jsonschema import validate
-from .config import INSTANCES_PATH
-
+from .config import INSTANCES_PATH, ADDONS_PATH
 
 INSTANCE_META_SCHEMA = {
     "type": "object",
@@ -40,7 +39,7 @@ def dump_instance_meta(instance_id, data):
     file = os.path.join(INSTANCES_PATH, instance_id, "instance.json")
     validate(instance=data, schema=INSTANCE_META_SCHEMA)
     with open(file, "w") as f:
-        json.dump(f, data)
+        f.write(json.dumps(data, sort_keys=True, indent=2))
 
 
 BINDING_META_SCHEMA = {
@@ -73,4 +72,64 @@ def dump_binding_meta(instance_id, data):
     file = os.path.join(INSTANCES_PATH, instance_id, "binding.json")
     validate(instance=data, schema=INSTANCE_META_SCHEMA)
     with open(file, "w") as f:
-        f.write(json.dumps(data))
+        f.write(json.dumps(data, sort_keys=True, indent=2))
+
+
+ADDONS_META_SCHEMA = {
+    "type": "object",
+    "patternProperties": {
+        ".*": {
+            "id": {"type": "string"},
+            "name": {"type": "string"},
+            "version": {"type": "string"},
+            "bindable": {"type": "boolean"},
+            "instances_retrievable": {"type": "boolean"},
+            "bindings_retrievable": {"type": "boolean"},
+            "allow_context_updates": {"type": "boolean"},
+            "description": {"type": "string"},
+            "tags": {"type": "string"},
+            "requires": {"type": "array"},
+            "metadata": {"type": "object"},
+            "plan_updateable": {"type": "boolean"},
+            "dashboard_client": {"type": "object"},
+            "plans": {
+                "type": "object",
+                "id": {"type": "string"},
+                "name": {"type": "string"},
+                "description": {"type": "string"},
+                "metadata": {"type": "object"},
+                "free": {"type": "boolean"},
+                "bindable": {"type": "boolean"},
+                "binding_rotatable": {"type": "boolean"},
+                "plan_updateable": {"type": "boolean"},
+                "schemas": {"type": "object"},
+                "maximum_polling_duration": {"type": "integer"},
+                "maintenance_info": {"type": "object"},
+                "required": [
+                    "id", "name", "description"
+                ]
+            },
+            "required": [
+                "id", "name", "description", "bindable", "version", "plans"
+            ]
+        }
+    }
+}
+
+
+def load_addons_meta():
+    file = os.path.join(ADDONS_PATH, "addons.json")
+    with open(file, 'r') as f:
+        data = json.loads(f.read())
+        if not data:
+            return {}
+        validate(instance=data, schema=INSTANCE_META_SCHEMA)
+        return data
+
+
+def dump_addons_meta(data):
+    file = os.path.join(ADDONS_PATH, "addons.json")
+    validate(instance=data, schema=INSTANCE_META_SCHEMA)
+    with open(file, "w") as f:
+        print("save addons.json")
+        f.write(json.dumps(data, sort_keys=True, indent=2))

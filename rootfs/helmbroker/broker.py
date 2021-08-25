@@ -7,15 +7,15 @@ from openbrokerapi.service_broker import *
 
 from .meta import load_instance_meta, load_binding_meta, dump_binding_meta
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
-    get_addon_path, get_addon_name, get_addon_updateable
+    get_addon_path, get_addon_name, get_addon_updateable, get_addon_bindable
 from .tasks import provision, bind, deprovision, update
-from helmbroker.loader import read_addons_file
+from helmbroker.meta import load_addons_meta
 
 
 class HelmServiceBroker(ServiceBroker):
 
     def catalog(self) -> Union[Service, List[Service]]:
-        services = read_addons_file()
+        services = load_addons_meta()
         return [Service(
             **addons
         ) for _, addons in services.items()]
@@ -55,7 +55,10 @@ class HelmServiceBroker(ServiceBroker):
              async_allowed: bool,
              **kwargs
              ) -> Binding:
-        instance_meta = dump_binding_meta(instance_id)
+        is_addon_bindable = get_addon_bindable(instance_id)
+        if not is_addon_bindable:
+            raise ErrBadRequest("Instance %s does not bindable" % instance_id)
+        instance_meta = load_instance_meta(instance_id)
         if not (instance_meta and
                 instance_meta['last_operation']['state'] == 'Ready'):
             raise ErrBadRequest(msg="This instance %s is not ready" % instance_id)
