@@ -57,7 +57,7 @@ def update(instance_id: str, details: UpdateDetails):
         },
         "last_operation": {
             "state": OperationState.IN_PROGRESS,
-            "description": "%s in progress at %s" % (instance_id, time.time())
+            "description": "update %s in progress at %s" % (instance_id, time.time())
         }
     }
     dump_instance_meta(instance_id, data)
@@ -79,24 +79,24 @@ def update(instance_id: str, details: UpdateDetails):
     status, output = command("helm", *args)
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED
-        data["last_operation"]["description"] = output
+        data["last_operation"]["description"] = "update %s failed: %s" % (instance_id, output)
     else:
         data["last_operation"]["state"] = OperationState.SUCCEEDED
-        data["last_operation"]["description"] = "succeeded at %s" % time.time()
+        data["last_operation"]["description"] = "update %s succeeded at %s" % (instance_id, time.time())
 
 
 def bind(instance_id: str,
          binding_id: str,
          details: BindDetails,
          async_allowed: bool,
-         **kwargs) -> Binding:
+         **kwargs):
     data = {
         "binding_id": binding_id,
         "credential": {
         },
         "last_operation": {
             "state": OperationState.IN_PROGRESS,
-            "description": "%s in progress at %s" % (binding_id, time.time())
+            "description": "binding %s in progress at %s" % (binding_id, time.time())
         }
     }
     dump_binding_meta(instance_id, data)
@@ -113,24 +113,26 @@ def bind(instance_id: str,
     status, templates = command("helm", *args)  # output: templates.yaml
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED
-        data["last_operation"]["description"] = templates
+        data["last_operation"]["description"] = "binding %s failed: %s" % (instance_id, templates)
 
     credential_template = yaml.load(templates.split('bind.yaml')[1], Loader=yaml.Loader)
     success_flag = True
+    errors = []
     for _ in credential_template['credential']:
         status, val = get_cred_value(details.context["namespace"], _['ValueFrom'])
         if status != 0:
             success_flag = False
+            errors.append(val)
         data[_['name']] = val
     if success_flag:
         data['last_operation'] = {
             'state': OperationState.SUCCEEDED,
-            'description': OperationState.SUCCESSFUL_BOUND,
+            'description': "binding %s succeeded at %s" % (instance_id, time.time())
         }
     else:
         data['last_operation'] = {
             'state': OperationState.FAILED,
-            'description': OperationState.FAILED,
+            'description': "binding %s failed: %s" % (instance_id, ','.join(errors))
         }
     dump_binding_meta(instance_id, data)
 
