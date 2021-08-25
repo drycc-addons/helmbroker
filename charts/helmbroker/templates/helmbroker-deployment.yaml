@@ -22,6 +22,13 @@ spec:
         app: drycc-helmbroker
     spec:
       serviceAccount: drycc-helmbroker
+      initContainers:
+      - name: loader
+        image: {{.Values.image_registry}}/{{.Values.image_org}}/helmbroker:{{.Values.image_tag}}
+        imagePullPolicy: {{.Values.image_pull_policy}}
+        command: ['python', '-m', 'helmbroker.loader'];
+          {{- include "helmbroker.envs" . | indent 10 }}
+          {{- include "helmbroker.volumeMounts" . | indent 10 }}
       containers:
         - name: drycc-helmbroker
           image: {{.Values.image_registry}}/{{.Values.image_org}}/helmbroker:{{.Values.image_tag}}
@@ -40,7 +47,7 @@ spec:
             timeoutSeconds: 10
             periodSeconds: 5
           ports:
-            - containerPort: 8000
+            - containerPort: 5000
               name: http
           {{- include "helmbroker.limits" . | indent 10 }}
           {{- include "helmbroker.envs" . | indent 10 }}

@@ -86,11 +86,13 @@ def load_addons(repository):
         encoding="utf-8")
     # compare index.yaml, is update
     local_index = read_file(local_index_file)
-    if remote_index == local_index:
+    if local_index and remote_index == local_index:
         return
     # delete old repository catalog
     if os.path.exists(ADDONS_PATH):
         shutil.rmtree(ADDONS_PATH)
+    else:
+        os.makedirs(ADDONS_PATH, exist_ok=True)
     # new index
     save_file(remote_index, ADDONS_PATH, index_name)
     remote_index = yaml.load(remote_index, Loader=yaml.Loader)

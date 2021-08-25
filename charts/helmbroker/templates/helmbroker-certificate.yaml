@@ -1,0 +1,15 @@
+{{- if .Values.cert_manager_enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: drycc-helmbroker
+spec:
+  secretName: drycc-helmbroker-certificate-auto
+  issuerRef:
+    name: drycc-cluster-issuer
+    kind: ClusterIssuer
+  dnsNames:
+  - drycc-helmbroker.{{ .Values.platform_domain }}
+  privateKey:
+    rotationPolicy: Always
+{{- end }}

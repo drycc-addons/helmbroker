@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "helmbroker-api-server"
+  labels:
+    app: "helmbroker"
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    {{- if not (eq .Values.ingress_class "") }}
+    kubernetes.io/ingress.class: "{{ .Values.ingress_class }}"
+    {{- end }}
+spec:
+  rules:
+  - host: drycc.{{ .Values.platform_domain }}
+    http:
+      paths:
+      - pathType: Prefix
+        {{- if eq .Values.ingress_class "gce" "alb" }}
+        path: /*
+        {{- else }}{{/* Has annotations but ingress class is not "gce" nor "alb" */}}
+        path: /
+        {{- end }}
+        backend:
+          service:
+            name: drycc-helmbroker
+            port:
+              number: 80
+  {{- if .Values.cert_manager_enabled }}
+  tls:
+    - secretName: drycc-helmbroker-certificate-auto
+      hosts:
+        - drycc.{{ .Values.platform_domain }}
+  {{- end }}

@@ -44,5 +44,8 @@ volumes:
 - name: helmbroker-data
   persistentVolumeClaim:
     claimName: drycc-helmbroker
+{{- else}}
+- name: helmbroker-data
+  emptyDir: {}
 {{- end }}
 {{- end }}
