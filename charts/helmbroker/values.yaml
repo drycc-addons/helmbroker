@@ -13,7 +13,7 @@ repositories: {}
 
 persistence:
   enabled: false
-  accessMode: ReadWriteOnce
+  accessMode: ReadWriteMany
   size: 5Gi
   storageClass: ""
   volumeName: ""
