@@ -1,6 +1,8 @@
 {{/* Generate helmbroker deployment envs */}}
-{{- define "helmbroker.envs" -}}
+{{- define "helmbroker.envs" }}
 env:
+- name: "TZ"
+  value: {{ .Values.time_zone | default "UTC" | quote }}
 {{- range $key, $value := .Values.environment }}
 - name: {{ $key }}
   value: {{ $value | quote }}
@@ -44,7 +46,7 @@ volumes:
 - name: helmbroker-data
   persistentVolumeClaim:
     claimName: drycc-helmbroker
-{{- else}}
+{{- else }}
 - name: helmbroker-data
   emptyDir: {}
 {{- end }}

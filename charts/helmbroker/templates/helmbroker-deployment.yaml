@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: drycc-helmbroker-cm
+  name: drycc-helmbroker
   labels:
     heritage: drycc
   annotations:
@@ -23,10 +23,14 @@ spec:
     spec:
       serviceAccount: drycc-helmbroker
       initContainers:
-      - name: loader
-        image: {{.Values.image_registry}}/{{.Values.image_org}}/helmbroker:{{.Values.image_tag}}
-        imagePullPolicy: {{.Values.image_pull_policy}}
-        command: ['python', '-m', 'helmbroker.loader']
+        - name: loader
+          image: {{.Values.image_registry}}/{{.Values.image_org}}/helmbroker:{{.Values.image_tag}}
+          imagePullPolicy: {{.Values.image_pull_policy}}
+          command:
+            - /bin/bash
+            - -c
+          args:
+            - python -m helmbroker.loader
           {{- include "helmbroker.envs" . | indent 10 }}
           {{- include "helmbroker.volumeMounts" . | indent 10 }}
       containers:
@@ -36,18 +40,18 @@ spec:
           livenessProbe:
             httpGet:
               path: /healthz
-              port: 5000
+              port: 8000
             initialDelaySeconds: 30
             timeoutSeconds: 10
           readinessProbe:
             httpGet:
               path: /readiness
-              port: 5000
+              port: 8000
             initialDelaySeconds: 30
             timeoutSeconds: 10
             periodSeconds: 5
           ports:
-            - containerPort: 5000
+            - containerPort: 8000
               name: http
           {{- include "helmbroker.limits" . | indent 10 }}
           {{- include "helmbroker.envs" . | indent 10 }}

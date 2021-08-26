@@ -21,7 +21,11 @@ spec:
           - image: {{.Values.image_registry}}/{{.Values.image_org}}/helmbroker:{{.Values.image_tag}}
             imagePullPolicy: {{.Values.image_pull_policy}}
             name: drycc-helmbroker-cleaner
-            command: ['python', '-m', 'helmbroker.cleaner']
+            command:
+              - /bin/bash
+              - -c
+            args:
+              - python -m helmbroker.cleaner
             {{- include "helmbroker.envs" . | indent 12 }}
             {{- include "helmbroker.volumeMounts" . | indent 12 }}
           {{- include "helmbroker.volumes" . | indent 10 }}

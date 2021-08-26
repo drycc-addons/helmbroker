@@ -31,4 +31,4 @@ RUN apk add --update --virtual .build-deps \
   && /app/bin/install
 
 CMD ["/app/bin/boot"]
-EXPOSE 5000
+EXPOSE 8000

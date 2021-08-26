@@ -109,6 +109,6 @@ def load_addons(repository):
 
 
 if __name__ == '__main__':
-    with open(CONFIG_PATH, 'r') as f:
-        repository = yaml.load(f.read(), Loader=yaml.Loader)
-        load_addons(repository['repositories'][0])
+    with open(f'{CONFIG_PATH}/repositories', 'r') as f:
+        repositories = yaml.load(f.read(), Loader=yaml.Loader)
+        load_addons(repositories[0])
