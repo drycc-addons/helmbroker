@@ -1,6 +1,6 @@
 import os
 
-HELMBROKER_ROOT = os.environ.get("HELMBROKER_CELERY_BROKER", '/etc/helmbroker')
+HELMBROKER_ROOT = os.environ.get("HELMBROKER_ROOT", '/etc/helmbroker')
 
 ADDONS_PATH = os.path.join(HELMBROKER_ROOT, 'addons')
 CONFIG_PATH = os.path.join(HELMBROKER_ROOT, 'config')

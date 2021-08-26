@@ -4,8 +4,8 @@ from celery import Celery
 
 app = Celery(
     'helmbroker',
-    broker=os.environ["HELMBROKER_CELERY_BROKER"],
-    backend=os.environ["HELMBROKER_CELERY_BACKEND"],
+    broker=os.environ.get("HELMBROKER_CELERY_BROKER"),
+    backend=os.environ.get("HELMBROKER_CELERY_BACKEND"),
     include=['helmbroker.tasks']
 )
 app.conf.update(result_expires=3600)

@@ -30,7 +30,7 @@ spec:
             - /bin/bash
             - -c
           args:
-            - celery -A api worker --autoscale=32,1 --loglevel=info
+            - celery -A helmbroker worker --autoscale=32,1 --loglevel=info
           {{- include "helmbroker.limits" . | indent 10 }}
           {{- include "helmbroker.envs" . | indent 10 }}
           {{- include "helmbroker.volumeMounts" . | indent 10 }}
