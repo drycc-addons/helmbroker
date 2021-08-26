@@ -2,6 +2,7 @@ import os
 import shutil
 from typing import Union, List, Optional
 
+from openbrokerapi.catalog import ServicePlan
 from openbrokerapi.errors import ErrInstanceAlreadyExists, ErrAsyncRequired, \
     ErrBindingAlreadyExists, ErrBadRequest, ErrInstanceDoesNotExist
 from openbrokerapi.service_broker import ServiceBroker, Service, \
@@ -21,9 +22,14 @@ class HelmServiceBroker(ServiceBroker):
 
     def catalog(self) -> Union[Service, List[Service]]:
         services = load_addons_meta()
-        return [Service(
-            **addons
-        ) for _, addons in services.items()]
+        service_objs = []
+        for _, addons in services.items():
+            plans_objs = []
+            for plan in addons['plans']:
+                plans_objs.append(ServicePlan(**plan))
+            addons['plans'] = plans_objs
+            service_objs.append(Service(**addons))
+        return service_objs
 
     def provision(self,
                   instance_id: str,
@@ -32,7 +38,7 @@ class HelmServiceBroker(ServiceBroker):
                   **kwargs) -> ProvisionedServiceSpec:
         instance_path = get_instance_path(instance_id)
         if os.path.exists(instance_path):
-            raise ErrInstanceAlreadyExists("Instance %s already exists" % instance_id)  # noqa
+            raise ErrInstanceAlreadyExists()
         if not async_allowed:
             raise ErrAsyncRequired()
         os.makedirs(instance_path, exist_ok=True)
@@ -62,7 +68,7 @@ class HelmServiceBroker(ServiceBroker):
              ) -> Binding:
         is_addon_bindable = get_addon_bindable(instance_id)
         if not is_addon_bindable:
-            raise ErrBadRequest("Instance %s does not bindable" % instance_id)
+            raise ErrBadRequest(msg="Instance %s does not bindable" % instance_id)
         instance_meta = load_instance_meta(instance_id)
         if not (instance_meta and
                 instance_meta['last_operation']['state'] == 'Ready'):
@@ -98,10 +104,10 @@ class HelmServiceBroker(ServiceBroker):
                ) -> UpdateServiceSpec:
         instance_path = get_instance_path(instance_id)
         if not os.path.exists(instance_path):
-            raise ErrBadRequest("Instance %s does not exist" % instance_id)
+            raise ErrBadRequest(msg="Instance %s does not exist" % instance_id)
         is_plan_updateable = get_addon_updateable(instance_id)
         if not is_plan_updateable:
-            raise ErrBadRequest("Instance %s does not updateable" % instance_id)  # noqa
+            raise ErrBadRequest(msg="Instance %s does not updateable" % instance_id)  # noqa
         if not async_allowed:
             raise ErrAsyncRequired()
         plan_path = get_plan_path(instance_id)
@@ -120,7 +126,7 @@ class HelmServiceBroker(ServiceBroker):
                     **kwargs) -> DeprovisionServiceSpec:
         instance_path = get_instance_path(instance_id)
         if not os.path.exists(instance_path):
-            raise ErrInstanceDoesNotExist("Instance %s not exists" % instance_id)  # noqa
+            raise ErrInstanceDoesNotExist()
         if not async_allowed:
             raise ErrAsyncRequired()
 

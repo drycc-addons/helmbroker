@@ -11,4 +11,4 @@ PASSWORD = os.environ.get('PASSWORD')
 
 
 class Config:
-    DEBUG = os.environ.get("DEBUG", False)
+    DEBUG = bool(os.environ.get('DRYCC_DEBUG', True))
