@@ -3,10 +3,10 @@
 env:
 - name: "TZ"
   value: {{ .Values.time_zone | default "UTC" | quote }}
-- name: USERNAME:
-  {{ if .Values.username | default "" | ne "" }}{{ .Values.username | b64enc }}{{ else }}{{ randAlphaNum 32 | b64enc }}{{ end }}
-- name: PASSWORD:
-  {{ if .Values.password | default "" | ne "" }}{{ .Values.password | b64enc }}{{ else }}{{ randAlphaNum 32 | b64enc }}{{ end }}
+- name: USERNAME
+  value: {{ if .Values.username | default "" | ne "" }}{{ .Values.username }}{{ else }}{{ randAlphaNum 32 }}{{ end }}
+- name: PASSWORD
+  value: {{ if .Values.password | default "" | ne "" }}{{ .Values.password }}{{ else }}{{ randAlphaNum 32 }}{{ end }}
 {{- range $key, $value := .Values.environment }}
 - name: {{ $key }}
   value: {{ $value | quote }}

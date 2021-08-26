@@ -44,8 +44,8 @@ class HelmServiceBroker(ServiceBroker):
         os.makedirs(instance_path, exist_ok=True)
         chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)  # noqa
         addon_chart_path, addon_plan_path = get_addon_path(details.service_id, details.plan_id)  # noqa
-        shutil.copy(addon_chart_path, chart_path)
-        shutil.copy(addon_plan_path, plan_path)
+        shutil.copytree(addon_chart_path, chart_path)
+        shutil.copytree(addon_plan_path, plan_path)
         provision.delay(instance_id, details)
         return ProvisionedServiceSpec(state=ProvisionState.IS_ASYNC)
 
@@ -115,7 +115,7 @@ class HelmServiceBroker(ServiceBroker):
         shutil.rmtree(plan_path)
         _, addon_plan_path = get_addon_path(details.service_id, details.plan_id)  # noqa
         # add the new plan
-        shutil.copy(addon_plan_path, plan_path)
+        shutil.copytree(addon_plan_path, plan_path)
         update.delay(instance_id, details)
         return UpdateServiceSpec(is_async=True)
 

@@ -12,7 +12,7 @@ from .utils import command, get_plan_path, get_chart_path, get_cred_value
 from .meta import dump_instance_meta, dump_binding_meta, load_instance_meta
 
 
-@app.task()
+@app.task(serializer='pickle')
 def provision(instance_id: str, details: ProvisionDetails):
     data = {
         "id": instance_id,
@@ -52,7 +52,7 @@ def provision(instance_id: str, details: ProvisionDetails):
         data["last_operation"]["description"] = "provision succeeded at %s" % time.time()  # noqa
 
 
-@app.task()
+@app.task(serializer='pickle')
 def update(instance_id: str, details: UpdateDetails):
     data = {
         "id": instance_id,
@@ -92,7 +92,7 @@ def update(instance_id: str, details: UpdateDetails):
         data["last_operation"]["description"] = "update %s succeeded at %s" % (instance_id, time.time())  # noqa
 
 
-@app.task()
+@app.task(serializer='pickle')
 def bind(instance_id: str,
          binding_id: str,
          details: BindDetails,
