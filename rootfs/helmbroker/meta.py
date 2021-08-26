@@ -136,5 +136,4 @@ def dump_addons_meta(data):
     file = os.path.join(ADDONS_PATH, "addons.json")
     validate(instance=data, schema=INSTANCE_META_SCHEMA)
     with open(file, "w") as f:
-        print("save addons.json")
         f.write(json.dumps(data, sort_keys=True, indent=2))

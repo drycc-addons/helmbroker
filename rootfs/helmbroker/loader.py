@@ -66,6 +66,7 @@ def addons_meta_file():
     for addon_meta in addons_meta:
         with open(f'{ADDONS_PATH}/{"/".join(addon_meta)}', 'r') as f:
             meta = yaml.load(f.read(), Loader=yaml.Loader)
+            meta['tags'] = meta.get('tags').split(', ') if meta.get('tags') else [] # noqa
             meta['plans'] = []
             addons_dict[meta['name']] = meta
 

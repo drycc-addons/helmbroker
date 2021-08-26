@@ -11,8 +11,13 @@ repositories: {}
 #- name: drycc-helm-broker
 #  url: http://helm-broker.drycc.cc/index-drycc.yaml
 
+# broker_credentials:
+# Optional Usernames and passwords that will be required to communicate with service broker
+username: admin
+password: admin
+
 persistence:
-  enabled: false
+  enabled: true
   accessMode: ReadWriteMany
   size: 5Gi
   storageClass: ""

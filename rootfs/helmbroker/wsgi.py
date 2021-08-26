@@ -2,7 +2,7 @@ import os
 from flask import Flask, make_response
 from openbrokerapi import api, log_util
 from helmbroker.broker import HelmServiceBroker
-from helmbroker.config import Config
+from helmbroker.config import Config, USERNAME, PASSWORD
 
 application = Flask("helmbroker")
 
@@ -24,4 +24,8 @@ def readiness():
 
 
 application.config.from_object(Config)
-application.register_blueprint(api.get_blueprint(HelmServiceBroker(), api.BrokerCredentials("", ""), log_util.basic_config()))  # noqa
+catalog_api = api.get_blueprint(
+    HelmServiceBroker(),
+    api.BrokerCredentials(USERNAME, PASSWORD),
+    log_util.basic_config())
+application.register_blueprint(catalog_api)
