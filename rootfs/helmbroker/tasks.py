@@ -50,6 +50,7 @@ def provision(instance_id: str, details: ProvisionDetails):
     else:
         data["last_operation"]["state"] = OperationState.SUCCEEDED.value
         data["last_operation"]["description"] = "provision succeeded at %s" % time.time()  # noqa
+    dump_instance_meta(instance_id, data)
 
 
 @app.task(serializer='pickle')
@@ -90,6 +91,7 @@ def update(instance_id: str, details: UpdateDetails):
     else:
         data["last_operation"]["state"] = OperationState.SUCCEEDED.value
         data["last_operation"]["description"] = "update %s succeeded at %s" % (instance_id, time.time())  # noqa
+    dump_instance_meta(instance_id, data)
 
 
 @app.task(serializer='pickle')
@@ -166,3 +168,4 @@ def deprovision(instance_id: str):
         data["last_operation"]["state"] = OperationState.SUCCEEDED.value
         data["last_operation"]["description"] = "deprovision succeeded at %s" % time.time()  # noqa
         shutil.rmtree(os.path.join(INSTANCES_PATH, instance_id), ignore_errors=True)  # noqa
+    dump_instance_meta(instance_id, data)
