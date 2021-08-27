@@ -9,7 +9,7 @@ from openbrokerapi.service_broker import ServiceBroker, Service, \
     ProvisionDetails, ProvisionedServiceSpec, ProvisionState, GetBindingSpec, \
     BindDetails, Binding, BindState, UnbindDetails, UnbindSpec, \
     UpdateDetails, UpdateServiceSpec, DeprovisionDetails, \
-    DeprovisionServiceSpec, LastOperation
+    DeprovisionServiceSpec, LastOperation, OperationState
 
 from .meta import load_instance_meta, load_binding_meta
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
@@ -71,7 +71,7 @@ class HelmServiceBroker(ServiceBroker):
             raise ErrBadRequest(msg="Instance %s does not bindable" % instance_id)
         instance_meta = load_instance_meta(instance_id)
         if not (instance_meta and
-                instance_meta['last_operation']['state'] == 'Ready'):
+                instance_meta['last_operation']['state'] == 'succeeded'):
             raise ErrBadRequest(msg="This instance %s is not ready" % instance_id)  # noqa
         if not async_allowed:
             raise ErrAsyncRequired()
@@ -140,7 +140,7 @@ class HelmServiceBroker(ServiceBroker):
                        ) -> LastOperation:
         data = load_instance_meta(instance_id)
         return LastOperation(
-            data["last_operation"]["state"],
+            OperationState(data["last_operation"]["state"]),
             data["last_operation"]["description"]
         )
 
@@ -152,6 +152,6 @@ class HelmServiceBroker(ServiceBroker):
                                ) -> LastOperation:
         data = load_binding_meta(instance_id)
         return LastOperation(
-            data["last_operation"]["state"],
+            OperationState(data["last_operation"]["state"]),
             data["last_operation"]["description"]
         )

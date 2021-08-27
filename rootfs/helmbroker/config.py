@@ -17,10 +17,10 @@ class Config:
     CELERY_ENABLE_UTC = True
     CELERY_TASK_SERIALIZER = 'pickle'
     CELERY_ACCEPT_CONTENT = frozenset([
-        'application/data',
-        'application/text',
-        'application/json',
-        'application/x-python-serialize',
+       'application/data',
+       'application/text',
+       'application/json',
+       'application/x-python-serialize',
     ])
     CELERY_TASK_TRACK_STARTED = True
     CELERY_TASK_TIME_LIMIT = 30 * 60

@@ -3,7 +3,10 @@ from celery import Celery
 
 from flask import current_app, Flask
 
+from helmbroker.config import Config
+
 flask_app = Flask(__name__)
+flask_app.config.from_object(Config)
 
 app = Celery(
     'helmbroker',

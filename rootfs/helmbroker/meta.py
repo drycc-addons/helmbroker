@@ -14,8 +14,13 @@ INSTANCE_META_SCHEMA = {
                 "service_id": {"type": "string"},
                 "plan_id": {"type": "string"},
                 "context": {"type": "object"},
-                "parameters": {"type": "object"},
-            }
+                "parameters": {
+                    'oneOf': [{'type': 'object'}, {'type': 'null'}]
+                },
+            },
+            "required": [
+                "service_id", "plan_id", "context"
+            ]
         },
         "last_operation": {
             "type": "object",

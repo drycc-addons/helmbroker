@@ -23,7 +23,7 @@ def provision(instance_id: str, details: ProvisionDetails):
             "parameters": details.parameters,
         },
         "last_operation": {
-            "state": OperationState.IN_PROGRESS,
+            "state": OperationState.IN_PROGRESS.value,
             "description": "provision %s in progress at %s" % (instance_id, time.time())  # noqa
         }
     }
@@ -45,10 +45,10 @@ def provision(instance_id: str, details: ProvisionDetails):
 
     status, output = command("helm", *args)
     if status != 0:
-        data["last_operation"]["state"] = OperationState.FAILED
+        data["last_operation"]["state"] = OperationState.FAILED.value
         data["last_operation"]["description"] = "provision error:\n%s" % output
     else:
-        data["last_operation"]["state"] = OperationState.SUCCEEDED
+        data["last_operation"]["state"] = OperationState.SUCCEEDED.value
         data["last_operation"]["description"] = "provision succeeded at %s" % time.time()  # noqa
 
 
@@ -63,7 +63,7 @@ def update(instance_id: str, details: UpdateDetails):
             "parameters": details.parameters,
         },
         "last_operation": {
-            "state": OperationState.IN_PROGRESS,
+            "state": OperationState.IN_PROGRESS.value,
             "description": "update %s in progress at %s" % (instance_id, time.time())  # noqa
         }
     }
@@ -85,10 +85,10 @@ def update(instance_id: str, details: UpdateDetails):
 
     status, output = command("helm", *args)
     if status != 0:
-        data["last_operation"]["state"] = OperationState.FAILED
+        data["last_operation"]["state"] = OperationState.FAILED.value
         data["last_operation"]["description"] = "update %s failed: %s" % (instance_id, output)  # noqa
     else:
-        data["last_operation"]["state"] = OperationState.SUCCEEDED
+        data["last_operation"]["state"] = OperationState.SUCCEEDED.value
         data["last_operation"]["description"] = "update %s succeeded at %s" % (instance_id, time.time())  # noqa
 
 
@@ -103,7 +103,7 @@ def bind(instance_id: str,
         "credential": {
         },
         "last_operation": {
-            "state": OperationState.IN_PROGRESS,
+            "state": OperationState.IN_PROGRESS.value,
             "description": "binding %s in progress at %s" % (binding_id, time.time())  # noqa
         }
     }
@@ -120,7 +120,7 @@ def bind(instance_id: str,
     ]
     status, templates = command("helm", *args)  # output: templates.yaml
     if status != 0:
-        data["last_operation"]["state"] = OperationState.FAILED
+        data["last_operation"]["state"] = OperationState.FAILED.value
         data["last_operation"]["description"] = "binding %s failed: %s" % (instance_id, templates)  # noqa
 
     credential_template = yaml.load(templates.split('bind.yaml')[1], Loader=yaml.Loader)  # noqa
@@ -134,12 +134,12 @@ def bind(instance_id: str,
         data[_['name']] = val
     if success_flag:
         data['last_operation'] = {
-            'state': OperationState.SUCCEEDED,
+            'state': OperationState.SUCCEEDED.value,
             'description': "binding %s succeeded at %s" % (instance_id, time.time())  # noqa
         }
     else:
         data['last_operation'] = {
-            'state': OperationState.FAILED,
+            'state': OperationState.FAILED.value,
             'description': "binding %s failed: %s" % (instance_id, ','.join(errors))  # noqa
         }
     dump_binding_meta(instance_id, data)
@@ -148,7 +148,7 @@ def bind(instance_id: str,
 @app.task()
 def deprovision(instance_id: str):
     data = load_instance_meta(instance_id)
-    data["last_operation"]["state"] = OperationState.IN_PROGRESS
+    data["last_operation"]["state"] = OperationState.IN_PROGRESS.value
     data["last_operation"]["description"] = "deprovision %s in progress at %s" % (instance_id, time.time())  # noqa
     dump_instance_meta(instance_id, data)
     command(
@@ -160,9 +160,9 @@ def deprovision(instance_id: str):
     )
     status, output = command("kubectl", "delete", "ns", data["details"]["context"]["namespace"])  # noqa
     if status != 0:
-        data["last_operation"]["state"] = OperationState.FAILED
+        data["last_operation"]["state"] = OperationState.FAILED.value
         data["last_operation"]["description"] = "deprovision error:\n%s" % output  # noqa
     else:
-        data["last_operation"]["state"] = OperationState.SUCCEEDED
+        data["last_operation"]["state"] = OperationState.SUCCEEDED.value
         data["last_operation"]["description"] = "deprovision succeeded at %s" % time.time()  # noqa
         shutil.rmtree(os.path.join(INSTANCES_PATH, instance_id), ignore_errors=True)  # noqa
