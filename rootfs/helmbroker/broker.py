@@ -68,7 +68,7 @@ class HelmServiceBroker(ServiceBroker):
              ) -> Binding:
         is_addon_bindable = get_addon_bindable(instance_id)
         if not is_addon_bindable:
-            raise ErrBadRequest(msg="Instance %s does not bindable" % instance_id)
+            raise ErrBadRequest(msg="Instance %s does not bindable" % instance_id)  # noqa
         instance_meta = load_instance_meta(instance_id)
         if not (instance_meta and
                 instance_meta['last_operation']['state'] == 'succeeded'):
@@ -79,8 +79,8 @@ class HelmServiceBroker(ServiceBroker):
         if os.path.exists(f'{instance_path}/bind.yaml'):
             raise ErrBindingAlreadyExists()
         chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)  # noqa
-        addon_name = get_addon_name(details.service_id)
-        shutil.copy(f'{plan_path}/bind.yaml', f'{chart_path}/{addon_name}/templates')  # noqa
+        # addon_name = get_addon_name(details.service_id)
+        shutil.copy(f'{plan_path}/bind.yaml', f'{chart_path}/templates')  # noqa
         bind.delay(instance_id, binding_id, details, async_allowed, **kwargs)
         return Binding(state=BindState.IS_ASYNC)
 

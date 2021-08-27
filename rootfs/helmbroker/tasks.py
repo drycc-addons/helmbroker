@@ -38,9 +38,12 @@ def provision(instance_id: str, details: ProvisionDetails):
         details.context["namespace"],
         "--create-namespace",
         "--wait",
-        "--timeout 30m0s"
+        "--timeout",
+        "30m0s",
         "-f",
-        values_file
+        values_file,
+        "--set",
+        f"fullnameOverride={details.context['instance_name']}"
     ]
 
     status, output = command("helm", *args)
@@ -79,9 +82,12 @@ def update(instance_id: str, details: UpdateDetails):
         details.context["namespace"],
         "--create-namespace",
         "--wait",
-        "--timeout 30m0s"
+        "--timeout",
+        "30m0s",
         "-f",
-        values_file
+        values_file,
+        "--set",
+        f"fullnameOverride={details.context['instance_name']}"
     ]
 
     status, output = command("helm", *args)
