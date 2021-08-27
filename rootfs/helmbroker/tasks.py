@@ -159,14 +159,13 @@ def deprovision(instance_id: str):
     data["last_operation"]["state"] = OperationState.IN_PROGRESS.value
     data["last_operation"]["description"] = "deprovision %s in progress at %s" % (instance_id, time.time())  # noqa
     dump_instance_meta(instance_id, data)
-    command(
+    status, output = command(
         "helm",
         "uninstall",
         data["details"]["context"]["instance_name"],
         "--namespace",
         data["details"]["context"]["namespace"],
     )
-    status, output = command("kubectl", "delete", "ns", data["details"]["context"]["namespace"])  # noqa
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED.value
         data["last_operation"]["description"] = "deprovision error:\n%s" % output  # noqa
