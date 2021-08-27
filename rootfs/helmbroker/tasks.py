@@ -39,7 +39,7 @@ def provision(instance_id: str, details: ProvisionDetails):
         "--create-namespace",
         "--wait",
         "--timeout",
-        "30m0s",
+        "10m0s",
         "-f",
         values_file,
         "--set",
@@ -83,7 +83,7 @@ def update(instance_id: str, details: UpdateDetails):
         "--create-namespace",
         "--wait",
         "--timeout",
-        "30m0s",
+        "10m0s",
         "-f",
         values_file,
         "--set",
@@ -173,5 +173,4 @@ def deprovision(instance_id: str):
     else:
         data["last_operation"]["state"] = OperationState.SUCCEEDED.value
         data["last_operation"]["description"] = "deprovision succeeded at %s" % time.time()  # noqa
-        shutil.rmtree(os.path.join(INSTANCES_PATH, instance_id), ignore_errors=True)  # noqa
     dump_instance_meta(instance_id, data)

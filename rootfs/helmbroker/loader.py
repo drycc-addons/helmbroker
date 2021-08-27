@@ -91,7 +91,7 @@ def load_addons(repository):
         return
     # delete old repository catalog
     if os.path.exists(ADDONS_PATH):
-        shutil.rmtree(ADDONS_PATH)
+        shutil.rmtree(ADDONS_PATH, ignore_errors=True)
     else:
         os.makedirs(ADDONS_PATH, exist_ok=True)
     # new index

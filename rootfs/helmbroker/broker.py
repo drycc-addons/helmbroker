@@ -13,7 +13,7 @@ from openbrokerapi.service_broker import ServiceBroker, Service, \
 
 from .meta import load_instance_meta, load_binding_meta
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
-    get_addon_path, get_addon_name, get_addon_updateable, get_addon_bindable
+    get_addon_path, get_addon_updateable, get_addon_bindable
 from .tasks import provision, bind, deprovision, update
 from helmbroker.meta import load_addons_meta
 
@@ -93,7 +93,7 @@ class HelmServiceBroker(ServiceBroker):
                ) -> UnbindSpec:
         instance_path = get_instance_path(instance_id)
         bind_yaml = f'{instance_path}/bind.yaml'
-        shutil.rmtree(bind_yaml)
+        shutil.rmtree(bind_yaml, ignore_errors=True)
         return UnbindSpec(is_async=False)
 
     def update(self,
@@ -112,7 +112,7 @@ class HelmServiceBroker(ServiceBroker):
             raise ErrAsyncRequired()
         plan_path = get_plan_path(instance_id)
         # delete the pre plan
-        shutil.rmtree(plan_path)
+        shutil.rmtree(plan_path, ignore_errors=True)
         _, addon_plan_path = get_addon_path(details.service_id, details.plan_id)  # noqa
         # add the new plan
         shutil.copytree(addon_plan_path, plan_path)
