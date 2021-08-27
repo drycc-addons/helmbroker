@@ -13,7 +13,7 @@ from openbrokerapi.service_broker import ServiceBroker, Service, \
 
 from .meta import load_instance_meta, load_binding_meta
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
-    get_addon_path, get_addon_name, get_addon_updateable, get_addon_bindable
+    get_addon_path, get_addon_updateable, get_addon_bindable
 from .tasks import provision, bind, deprovision, update
 from helmbroker.meta import load_addons_meta
 
