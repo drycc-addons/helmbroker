@@ -57,18 +57,18 @@ def provision(instance_id: str, details: ProvisionDetails):
 
 @app.task(serializer='pickle')
 def update(instance_id: str, details: UpdateDetails):
-    data = {
-        "id": instance_id,
-        "details": {
-            "service_id": details.service_id,
-            "plan_id": details.plan_id,
-            "context": details.context,
-            "parameters": details.parameters,
-        },
-        "last_operation": {
-            "state": OperationState.IN_PROGRESS.value,
-            "description": "update %s in progress at %s" % (instance_id, time.time())  # noqa
-        }
+    data = load_instance_meta(instance_id)
+    if details.service_id:
+        data['details']['service_id'] = details.service_id
+    if details.plan_id:
+        data['details']['service_id'] = details.plan_id
+    if details.context:
+        data['details']['context'] = details.context
+    if details.parameters:
+        data['details']['service_id'] = details.parameters
+    data['last_operation'] = {
+        "state": OperationState.IN_PROGRESS.value,
+        "description": "update %s in progress at %s" % (instance_id, time.time())  # noqa
     }
     dump_instance_meta(instance_id, data)
     chart_path = get_chart_path(instance_id)
@@ -107,8 +107,7 @@ def bind(instance_id: str,
          **kwargs):
     data = {
         "binding_id": binding_id,
-        "credential": {
-        },
+        "credentials": {},
         "last_operation": {
             "state": OperationState.IN_PROGRESS.value,
             "description": "binding %s in progress at %s" % (binding_id, time.time())  # noqa
@@ -141,7 +140,7 @@ def bind(instance_id: str,
             success_flag = False
             errors.append(val)
         else:
-            data['credential'][_['name']] = val
+            data['credentials'][_['name']] = val
     if success_flag:
         data['last_operation'] = {
             'state': OperationState.SUCCEEDED.value,
@@ -154,7 +153,8 @@ def bind(instance_id: str,
         }
     dump_binding_meta(instance_id, data)
     bind_yaml = f'{chart_path}/templates/bind.yaml'
-    shutil.rmtree(bind_yaml, ignore_errors=True)
+    if os.path.exists(bind_yaml):
+        os.remove(bind_yaml)
 
 
 @app.task()

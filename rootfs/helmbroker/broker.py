@@ -4,7 +4,8 @@ from typing import Union, List, Optional
 
 from openbrokerapi.catalog import ServicePlan
 from openbrokerapi.errors import ErrInstanceAlreadyExists, ErrAsyncRequired, \
-    ErrBindingAlreadyExists, ErrBadRequest, ErrInstanceDoesNotExist
+    ErrBindingAlreadyExists, ErrBadRequest, ErrInstanceDoesNotExist, \
+    ServiceException
 from openbrokerapi.service_broker import ServiceBroker, Service, \
     ProvisionDetails, ProvisionedServiceSpec, ProvisionState, GetBindingSpec, \
     BindDetails, Binding, BindState, UnbindDetails, UnbindSpec, \
@@ -73,15 +74,18 @@ class HelmServiceBroker(ServiceBroker):
         if not (instance_meta and
                 instance_meta['last_operation']['state'] == 'succeeded'):
             raise ErrBadRequest(msg="This instance %s is not ready" % instance_id)  # noqa
-        # if not async_allowed:
-        #     raise ErrAsyncRequired()
         instance_path = get_instance_path(instance_id)
-        if os.path.exists(f'{instance_path}/bind.yaml'):
+        if os.path.exists(f'{instance_path}/bind.json'):
             raise ErrBindingAlreadyExists()
         chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)  # noqa
         shutil.copy(f'{plan_path}/bind.yaml', f'{chart_path}/templates')
-        bind.delay(instance_id, binding_id, details, async_allowed, **kwargs)
-        return Binding(state=BindState.IS_ASYNC)
+        bind(instance_id, binding_id, details, async_allowed, **kwargs)
+        data = load_binding_meta(instance_id)
+        if data["last_operation"]["state"] == OperationState.SUCCEEDED.value:
+            return Binding(state=BindState.SUCCESSFUL_BOUND,
+                           credentials=data["credentials"])
+        else:
+            raise ServiceException(data["last_operation"]["description"])
 
     def unbind(self,
                instance_id: str,
@@ -92,7 +96,8 @@ class HelmServiceBroker(ServiceBroker):
                ) -> UnbindSpec:
         instance_path = get_instance_path(instance_id)
         binding_info = f'{instance_path}/binding.json'
-        shutil.rmtree(binding_info, ignore_errors=True)
+        if os.path.exists(binding_info):
+            os.remove(binding_info)
         return UnbindSpec(is_async=False)
 
     def update(self,
@@ -104,17 +109,18 @@ class HelmServiceBroker(ServiceBroker):
         instance_path = get_instance_path(instance_id)
         if not os.path.exists(instance_path):
             raise ErrBadRequest(msg="Instance %s does not exist" % instance_id)
-        is_plan_updateable = get_addon_updateable(instance_id)
+        is_plan_updateable = get_addon_updateable(details.service_id)
         if not is_plan_updateable:
             raise ErrBadRequest(msg="Instance %s does not updateable" % instance_id)  # noqa
         if not async_allowed:
             raise ErrAsyncRequired()
-        plan_path = get_plan_path(instance_id)
-        # delete the pre plan
-        shutil.rmtree(plan_path, ignore_errors=True)
-        _, addon_plan_path = get_addon_path(details.service_id, details.plan_id)  # noqa
-        # add the new plan
-        shutil.copytree(addon_plan_path, plan_path)
+        if details.plan_id is not None:
+            plan_path = get_plan_path(instance_id)
+            # delete the pre plan
+            shutil.rmtree(plan_path, ignore_errors=True)
+            _, addon_plan_path = get_addon_path(details.service_id, details.plan_id)  # noqa
+            # add the new plan
+            shutil.copytree(addon_plan_path, plan_path)
         update.delay(instance_id, details)
         return UpdateServiceSpec(is_async=True)
 

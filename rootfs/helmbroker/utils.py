@@ -21,23 +21,21 @@ get_chart_path = lambda instance_id: os.path.join(get_instance_path(instance_id)
 get_plan_path = lambda instance_id: os.path.join(get_instance_path(instance_id), "plan") # noqa
 
 
-def get_addon_path(service_id, plan_id):
+def get_addon_meta(service_id):
     services = load_addons_meta()
     service = [addon for addon in [addons for _, addons in services.items()]
                if addon['id'] == service_id][0]
+    return service
+
+
+def get_addon_path(service_id, plan_id):
+    service = get_addon_meta(service_id)
     plan = [plan for plan in service['plans'] if plan['id'] == plan_id][0]
     service_name = f'{service["name"]}-{service["version"]}'
     plan_name = plan['name']
     service_path = f'{ADDONS_PATH}/{service_name}/chart/{service["name"]}'
     plan_path = f'{ADDONS_PATH}/{service_name}/plans/{plan_name}'
     return service_path, plan_path
-
-
-def get_addon_meta(service_id):
-    services = load_addons_meta()
-    service = [addon for addon in [addons for _, addons in services.items()]
-               if addon['id'] == service_id][0]
-    return service
 
 
 def get_addon_name(service_id):
