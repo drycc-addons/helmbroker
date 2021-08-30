@@ -62,25 +62,25 @@ def get_cred_value(ns, source):
         return get_config_map_key_value(ns, source['configMapRef'])
     if source.get('secretKeyRef'):
         return get_secret_key_value(ns, source['secretKeyRef'])
-    return -1, 'invalid ValueFrom'
+    return -1, 'invalid valueFrom'
 
 
 def get_service_key_value(ns, service_ref):
     args = [
-        "get", "svc", service_ref['name'], "-n", ns, '-o', f'jsonpath="{service_ref["jsonpath"]}"', # noqa
+        "get", "svc", service_ref['name'], "-n", ns, '-o', f"jsonpath=\'{service_ref['jsonpath']}\'", # noqa
     ]
     return command("kubectl", *args)
 
 
 def get_config_map_key_value(ns, config_map_ref):
     args = [
-        "get", "cm", config_map_ref['name'], "-n", ns, '-o', f'jsonpath="{config_map_ref["jsonpath"]}"', # noqa
+        "get", "cm", config_map_ref['name'], "-n", ns, '-o', f"jsonpath=\'{config_map_ref['jsonpath']}\'", # noqa
     ]
     return command("kubectl", *args)
 
 
 def get_secret_key_value(ns, secret_ref):
     args = [
-        "get", "secret", secret_ref['name'], "-n", ns, '-o', f'jsonpath="{secret_ref["jsonpath"]}"', # noqa
+        "get", "secret", secret_ref['name'], "-n", ns, '-o', f"jsonpath=\'{secret_ref['jsonpath']}\'", # noqa
     ]
     return command("kubectl", *args)

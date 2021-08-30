@@ -7,7 +7,6 @@ from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
     UpdateDetails, BindDetails
 
 from .celery import app
-from .config import INSTANCES_PATH
 from .utils import command, get_plan_path, get_chart_path, get_cred_value
 from .meta import dump_instance_meta, dump_binding_meta, load_instance_meta
 
@@ -124,7 +123,9 @@ def bind(instance_id: str,
         details.context["instance_name"],
         chart_path,
         "-f",
-        values_file
+        values_file,
+        "--set",
+        f"fullnameOverride={details.context['instance_name']}"
     ]
     status, templates = command("helm", *args)  # output: templates.yaml
     if status != 0:
@@ -135,11 +136,12 @@ def bind(instance_id: str,
     success_flag = True
     errors = []
     for _ in credential_template['credential']:
-        status, val = get_cred_value(details.context["namespace"], _['ValueFrom'])  # noqa
+        status, val = get_cred_value(details.context["namespace"], _['valueFrom'])  # noqa
         if status != 0:
             success_flag = False
             errors.append(val)
-        data[_['name']] = val
+        else:
+            data['credential'][_['name']] = val
     if success_flag:
         data['last_operation'] = {
             'state': OperationState.SUCCEEDED.value,
@@ -151,6 +153,8 @@ def bind(instance_id: str,
             'description': "binding %s failed: %s" % (instance_id, ','.join(errors))  # noqa
         }
     dump_binding_meta(instance_id, data)
+    bind_yaml = f'{chart_path}/templates/bind.yaml'
+    shutil.rmtree(bind_yaml, ignore_errors=True)
 
 
 @app.task()

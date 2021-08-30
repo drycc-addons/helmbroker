@@ -66,21 +66,20 @@ class HelmServiceBroker(ServiceBroker):
              async_allowed: bool,
              **kwargs
              ) -> Binding:
-        is_addon_bindable = get_addon_bindable(instance_id)
+        is_addon_bindable = get_addon_bindable(details.service_id)
         if not is_addon_bindable:
             raise ErrBadRequest(msg="Instance %s does not bindable" % instance_id)  # noqa
         instance_meta = load_instance_meta(instance_id)
         if not (instance_meta and
                 instance_meta['last_operation']['state'] == 'succeeded'):
             raise ErrBadRequest(msg="This instance %s is not ready" % instance_id)  # noqa
-        if not async_allowed:
-            raise ErrAsyncRequired()
+        # if not async_allowed:
+        #     raise ErrAsyncRequired()
         instance_path = get_instance_path(instance_id)
         if os.path.exists(f'{instance_path}/bind.yaml'):
             raise ErrBindingAlreadyExists()
         chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)  # noqa
-        # addon_name = get_addon_name(details.service_id)
-        shutil.copy(f'{plan_path}/bind.yaml', f'{chart_path}/templates')  # noqa
+        shutil.copy(f'{plan_path}/bind.yaml', f'{chart_path}/templates')
         bind.delay(instance_id, binding_id, details, async_allowed, **kwargs)
         return Binding(state=BindState.IS_ASYNC)
 
@@ -92,8 +91,8 @@ class HelmServiceBroker(ServiceBroker):
                **kwargs
                ) -> UnbindSpec:
         instance_path = get_instance_path(instance_id)
-        bind_yaml = f'{instance_path}/bind.yaml'
-        shutil.rmtree(bind_yaml, ignore_errors=True)
+        binding_info = f'{instance_path}/binding.json'
+        shutil.rmtree(binding_info, ignore_errors=True)
         return UnbindSpec(is_async=False)
 
     def update(self,
