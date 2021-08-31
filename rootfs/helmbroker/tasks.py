@@ -1,7 +1,6 @@
 import os
 import time
 import yaml
-import shutil
 
 from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
     UpdateDetails, BindDetails

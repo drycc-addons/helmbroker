@@ -7,7 +7,7 @@ PLATFORM ?= linux/amd64,linux/arm64
 
 include versioning.mk
 
-SHELLCHECK_PREFIX := docker run -v ${CURDIR}:/workdir -w /workdir ${DEV_REGISTRY}/drycc/go-dev shellcheck
+SHELLCHECK_PREFIX := docker run --rm -v ${CURDIR}:/workdir -w /workdir ${DEV_REGISTRY}/drycc/go-dev shellcheck
 SHELL_SCRIPTS = $(wildcard rootfs/bin/*) $(shell find "rootfs" -name '*.sh') $(wildcard _scripts/*.sh)
 
 # Test processes used in quick unit testing
@@ -49,7 +49,7 @@ full-clean: check-docker
 test: test-style test-unit test-functional
 
 test-style: docker-build-test
-	docker run -v ${CURDIR}:/test -w /test/rootfs ${IMAGE}.test /test/rootfs/bin/test-style
+	docker run --rm -v ${CURDIR}:/test -w /test/rootfs ${IMAGE}.test /test/rootfs/bin/test-style
 	${SHELLCHECK_PREFIX} $(SHELL_SCRIPTS)
 
 test-unit: docker-build-test
@@ -63,6 +63,6 @@ test-integration:
 
 upload-coverage:
 	$(eval CI_ENV := $(shell curl -s https://codecov.io/env | bash))
-	docker run ${CI_ENV} -v ${CURDIR}:/test -w /test/rootfs ${IMAGE}.test codecov --required
+	docker run --rm ${CI_ENV} -v ${CURDIR}:/test -w /test/rootfs ${IMAGE}.test codecov --required
 
 .PHONY: check-kubectl check-docker build docker-build docker-build-test deploy clean commit-hook full-clean test test-style test-unit test-functional test-integration upload-coverage
