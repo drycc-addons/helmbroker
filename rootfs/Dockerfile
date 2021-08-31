@@ -12,6 +12,7 @@ RUN apk add --update --virtual .build-deps \
     musl-dev \
     openssl-dev \
   && python3 -m venv /app/.venv \
+  && source /app/.venv/bin/activate \
   && pip3 install --disable-pip-version-check --no-cache-dir -r /app/requirements.txt \
   && runDeps="$( \
     scanelf --needed --nobanner --format '%n#p' --recursive /usr/local \
@@ -29,6 +30,8 @@ RUN apk add --update --virtual .build-deps \
   && apk del .build-deps \
   && chmod +x /app/bin/* \
   && /app/bin/install
+
+ENTRYPOINT ["/app/bin/entrypoint"]
 
 CMD ["/app/bin/boot"]
 EXPOSE 8000
