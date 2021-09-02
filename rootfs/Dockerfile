@@ -31,7 +31,6 @@ RUN apk add --update --virtual .build-deps \
   && chmod +x /app/bin/* \
   && /app/bin/install
 
-ENTRYPOINT ["/app/bin/entrypoint"]
-
+ENV PATH /app/.venv/bin:/app/bin:$PATH
 CMD ["/app/bin/boot"]
 EXPOSE 8000
