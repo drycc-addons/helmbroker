@@ -7,9 +7,9 @@ replicas: 1
 # limits_memory: "50Mi"
 
 ## config the helm-broker repositories
-repositories: {}
-#- name: drycc-helm-broker
-#  url: http://helm-broker.drycc.cc/index-drycc.yaml
+repositories:
+- name: drycc-helm-broker
+  url: https://github.com/drycc/addons/releases/download/latest/index.yaml
 
 celery_replicas: 1
 
