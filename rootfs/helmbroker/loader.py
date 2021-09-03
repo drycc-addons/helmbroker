@@ -4,7 +4,8 @@ import tarfile
 import requests
 import yaml
 
-from .config import ADDONS_PATH, CONFIG_PATH, dump_addons_meta
+from .config import ADDONS_PATH, CONFIG_PATH
+from .utils import dump_addons_meta
 
 
 def download_file(url, dest):
