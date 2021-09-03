@@ -5,7 +5,7 @@ import requests
 import yaml
 
 from .config import ADDONS_PATH, CONFIG_PATH
-from .meta import dump_addons_meta
+from .utils import dump_addons_meta
 
 
 def download_file(url, dest):
