@@ -1,4 +1,5 @@
 import os
+import time
 import shutil
 from typing import Union, List, Optional
 
@@ -12,9 +13,10 @@ from openbrokerapi.service_broker import ServiceBroker, Service, \
     UpdateDetails, UpdateServiceSpec, DeprovisionDetails, \
     DeprovisionServiceSpec, LastOperation, OperationState
 
-from .meta import load_instance_meta, load_binding_meta
+from .meta import load_instance_meta, load_binding_meta, dump_instance_meta
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
-    get_addon_path, get_addon_updateable, get_addon_bindable
+    get_addon_path, get_addon_updateable, get_addon_bindable, InstanceLock, \
+    get_instance_file
 from .tasks import provision, bind, deprovision, update
 from helmbroker.meta import load_addons_meta
 
@@ -43,10 +45,29 @@ class HelmServiceBroker(ServiceBroker):
         if not async_allowed:
             raise ErrAsyncRequired()
         os.makedirs(instance_path, exist_ok=True)
-        chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)  # noqa
-        addon_chart_path, addon_plan_path = get_addon_path(details.service_id, details.plan_id)  # noqa
+        chart_path, plan_path = (
+            get_chart_path(instance_id), get_plan_path(instance_id))
+        addon_chart_path, addon_plan_path = (
+            get_addon_path(details.service_id, details.plan_id))
         shutil.copytree(addon_chart_path, chart_path)
         shutil.copytree(addon_plan_path, plan_path)
+        data = {
+            "id": instance_id,
+            "details": {
+                "service_id": details.service_id,
+                "plan_id": details.plan_id,
+                "context": details.context,
+                "parameters": details.parameters,
+            },
+            "last_operation": {
+                "state": OperationState.IN_PROGRESS.value,
+                "description": (
+                    "provision %s in progress at %s" % (
+                        instance_id, time.time()))
+            }
+        }
+        with InstanceLock(instance_id):
+            dump_instance_meta(instance_id, data)
         provision.delay(instance_id, details)
         return ProvisionedServiceSpec(state=ProvisionState.IS_ASYNC)
 
@@ -69,15 +90,18 @@ class HelmServiceBroker(ServiceBroker):
              ) -> Binding:
         is_addon_bindable = get_addon_bindable(details.service_id)
         if not is_addon_bindable:
-            raise ErrBadRequest(msg="Instance %s does not bindable" % instance_id)  # noqa
+            raise ErrBadRequest(
+                msg="Instance %s does not bindable" % instance_id)
         instance_meta = load_instance_meta(instance_id)
         if not (instance_meta and
                 instance_meta['last_operation']['state'] == 'succeeded'):
-            raise ErrBadRequest(msg="This instance %s is not ready" % instance_id)  # noqa
+            raise ErrBadRequest(
+                msg="This instance %s is not ready" % instance_id)
         instance_path = get_instance_path(instance_id)
         if os.path.exists(f'{instance_path}/bind.json'):
             raise ErrBindingAlreadyExists()
-        chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)  # noqa
+        chart_path, plan_path = (
+            get_chart_path(instance_id), get_plan_path(instance_id))
         shutil.copy(f'{plan_path}/bind.yaml', f'{chart_path}/templates')
         bind(instance_id, binding_id, details, async_allowed, **kwargs)
         data = load_binding_meta(instance_id)
@@ -111,14 +135,16 @@ class HelmServiceBroker(ServiceBroker):
             raise ErrBadRequest(msg="Instance %s does not exist" % instance_id)
         is_plan_updateable = get_addon_updateable(details.service_id)
         if not is_plan_updateable:
-            raise ErrBadRequest(msg="Instance %s does not updateable" % instance_id)  # noqa
+            raise ErrBadRequest(
+                msg="Instance %s does not updateable" % instance_id)
         if not async_allowed:
             raise ErrAsyncRequired()
         if details.plan_id is not None:
             plan_path = get_plan_path(instance_id)
             # delete the pre plan
             shutil.rmtree(plan_path, ignore_errors=True)
-            _, addon_plan_path = get_addon_path(details.service_id, details.plan_id)  # noqa
+            _, addon_plan_path = get_addon_path(
+                details.service_id, details.plan_id)
             # add the new plan
             shutil.copytree(addon_plan_path, plan_path)
         update.delay(instance_id, details)
@@ -130,11 +156,14 @@ class HelmServiceBroker(ServiceBroker):
                     async_allowed: bool,
                     **kwargs) -> DeprovisionServiceSpec:
         instance_path = get_instance_path(instance_id)
-        if not os.path.exists(instance_path):
+        if os.path.exists(instance_path):
+            if not os.path.exists(get_instance_file(instance_id)):
+                return DeprovisionServiceSpec(
+                    is_async=False, operation=OperationState.SUCCEEDED)
+        else:
             raise ErrInstanceDoesNotExist()
         if not async_allowed:
             raise ErrAsyncRequired()
-
         deprovision.delay(instance_id)
         return DeprovisionServiceSpec(is_async=True)
 

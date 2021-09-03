@@ -2,7 +2,8 @@ import os
 import json
 import time
 from jsonschema import validate
-from .config import INSTANCES_PATH, ADDONS_PATH
+from .utils import get_instance_path, get_instance_file
+from .config import ADDONS_PATH
 
 INSTANCE_META_SCHEMA = {
     "type": "object",
@@ -35,7 +36,7 @@ INSTANCE_META_SCHEMA = {
 
 
 def load_instance_meta(instance_id):
-    file = os.path.join(INSTANCES_PATH, instance_id, "instance.json")
+    file = get_instance_file(instance_id)
     with open(file) as f:
         data = json.load(f)
         validate(instance=data, schema=INSTANCE_META_SCHEMA)
@@ -44,7 +45,7 @@ def load_instance_meta(instance_id):
 
 def dump_instance_meta(instance_id, data):
     data["last_modified_time "] = time.time()
-    file = os.path.join(INSTANCES_PATH, instance_id, "instance.json")
+    file = get_instance_file(instance_id)
     validate(instance=data, schema=INSTANCE_META_SCHEMA)
     with open(file, "w") as f:
         f.write(json.dumps(data, sort_keys=True, indent=2))
@@ -70,7 +71,7 @@ BINDING_META_SCHEMA = {
 
 
 def load_binding_meta(instance_id):
-    file = os.path.join(INSTANCES_PATH, instance_id, "binding.json")
+    file = os.path.join(get_instance_path(instance_id), "binding.json")
     with open(file, 'r') as f:
         data = json.loads(f.read())
         validate(instance=data, schema=INSTANCE_META_SCHEMA)
@@ -79,7 +80,7 @@ def load_binding_meta(instance_id):
 
 def dump_binding_meta(instance_id, data):
     data["last_modified_time "] = time.time()
-    file = os.path.join(INSTANCES_PATH, instance_id, "binding.json")
+    file = os.path.join(get_instance_path(instance_id), "binding.json")
     validate(instance=data, schema=INSTANCE_META_SCHEMA)
     with open(file, "w") as f:
         f.write(json.dumps(data, sort_keys=True, indent=2))

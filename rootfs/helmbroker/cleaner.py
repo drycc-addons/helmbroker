@@ -8,13 +8,14 @@ from openbrokerapi.service_broker import OperationState
 from .config import INSTANCES_PATH
 from .meta import load_instance_meta
 from .tasks import deprovision
+from .utils import get_instance_file
 
 logger = logging.getLogger(__name__)
 
 
 def clean_instance():
     for instance_id in os.listdir(INSTANCES_PATH):
-        if os.path.exists(os.path.join(INSTANCES_PATH, instance_id, "instance.json")):  # noqa
+        if os.path.exists(get_instance_file(instance_id)):  # noqa
             data = load_instance_meta(instance_id)
             interval = time.time() - data["last_modified_time"]
             if interval > 3600 * 24 and data["last_operation"]["state"] != OperationState.SUCCEEDED:  # noqa

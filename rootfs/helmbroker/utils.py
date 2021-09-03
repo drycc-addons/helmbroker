@@ -1,4 +1,5 @@
 import os
+import fcntl
 import yaml
 import json
 import subprocess
@@ -17,6 +18,7 @@ def command(cmd, *args, output_type="text"):
 
 
 get_instance_path = lambda instance_id: os.path.join(INSTANCES_PATH, instance_id) # noqa
+get_instance_file = lambda instance_id: os.path.join(get_instance_path(instance_id), "instance.json") # noqa
 get_chart_path = lambda instance_id: os.path.join(get_instance_path(instance_id), "chart") # noqa
 get_plan_path = lambda instance_id: os.path.join(get_instance_path(instance_id), "plan") # noqa
 
@@ -82,3 +84,24 @@ def get_secret_key_value(ns, secret_ref):
         "get", "secret", secret_ref['name'], "-n", ns, '-o', f"jsonpath=\'{secret_ref['jsonpath']}\'", # noqa
     ]
     return command("kubectl", *args)
+
+
+class InstanceLock(object):
+
+    def __init__(self, instance_id):
+        self.instance_id = instance_id
+
+    def __enter__(self):
+        self.fileno = open(
+            os.path.join(INSTANCES_PATH, self.instance_id, "instance.lock"),
+            "w"
+        )
+        fcntl.flock(self.fileno, fcntl.LOCK_EX)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        fcntl.flock(self.fileno, fcntl.LOCK_UN)
+
+    def __del__(self):
+        if hasattr(self, "fileno"):
+            fcntl.flock(self.fileno, fcntl.LOCK_UN)
