@@ -16,6 +16,14 @@ from .utils import command, get_plan_path, get_chart_path, get_cred_value, \
 def provision(instance_id: str, details: ProvisionDetails):
     with InstanceLock(instance_id):
         chart_path = get_chart_path(instance_id)
+        if os.path.exists(f'{chart_path}/requirements.lock'):
+            args = [
+                "dependency",
+                "update",
+                "--skip-refresh",
+                chart_path,
+            ]
+            command("helm", *args)
         values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
         args = [
             "install",
@@ -43,7 +51,6 @@ def provision(instance_id: str, details: ProvisionDetails):
             data["last_operation"]["state"] = OperationState.SUCCEEDED.value
             data["last_operation"]["description"] = (
                 "provision succeeded at %s" % time.time())
-        print(data)
         dump_instance_meta(instance_id, data)
 
 
@@ -127,7 +134,12 @@ def bind(instance_id: str,
     success_flag = True
     errors = []
     for _ in credential_template['credential']:
-        status, val = get_cred_value(details.context["namespace"], _['valueFrom'])  # noqa
+        if _.get('valueFrom'):
+            status, val = get_cred_value(details.context["namespace"], _['valueFrom'])  # noqa
+        elif _.get('value'):
+            status, val = 0,  _['value']
+        else:
+            status, val = -1, 'invalid value'
         if status != 0:
             success_flag = False
             errors.append(val)
