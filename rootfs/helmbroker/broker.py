@@ -13,12 +13,11 @@ from openbrokerapi.service_broker import ServiceBroker, Service, \
     UpdateDetails, UpdateServiceSpec, DeprovisionDetails, \
     DeprovisionServiceSpec, LastOperation, OperationState
 
-from .meta import load_instance_meta, load_binding_meta, dump_instance_meta
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
     get_addon_path, get_addon_updateable, get_addon_bindable, InstanceLock, \
-    get_instance_file
+    get_instance_file, load_instance_meta, load_binding_meta, \
+    dump_instance_meta, load_addons_meta
 from .tasks import provision, bind, deprovision, update
-from helmbroker.meta import load_addons_meta
 
 
 class HelmServiceBroker(ServiceBroker):

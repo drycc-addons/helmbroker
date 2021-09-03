@@ -8,8 +8,8 @@ from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
 
 from .celery import app
 from .utils import command, get_plan_path, get_chart_path, get_cred_value, \
-    InstanceLock, get_instance_file
-from .meta import dump_instance_meta, dump_binding_meta, load_instance_meta
+    InstanceLock, get_instance_file, dump_instance_meta, dump_binding_meta, \
+    load_instance_meta
 
 
 @app.task(serializer='pickle')
