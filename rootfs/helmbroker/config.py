@@ -13,16 +13,16 @@ PASSWORD = os.environ.get('PASSWORD')
 class Config:
     DEBUG = bool(os.environ.get('DRYCC_DEBUG', True))
     # Celery Configuration Options
-    CELERY_TIMEZONE = "Asia/Shanghai"
-    CELERY_ENABLE_UTC = True
-    CELERY_TASK_SERIALIZER = 'pickle'
-    CELERY_ACCEPT_CONTENT = frozenset([
+    timezone = "Asia/Shanghai"
+    enable_utc = True
+    task_serializer = 'pickle'
+    accept_content = frozenset([
        'application/data',
        'application/text',
        'application/json',
        'application/x-python-serialize',
     ])
-    CELERY_TASK_TRACK_STARTED = True
-    CELERY_TASK_TIME_LIMIT = 30 * 60
-    CELERYD_MAX_TASKS_PER_CHILD = 200
-    CELERY_TASK_RESULT_EXPIRES = 24 * 60 * 60
+    task_track_started = True
+    task_time_limit = 30 * 60
+    worker_max_tasks_per_child = 200
+    result_expires = 24 * 60 * 60
