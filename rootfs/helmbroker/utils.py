@@ -47,6 +47,7 @@ INSTANCE_META_SCHEMA = {
             "type": "object",
             "properties": {
                 "state": {"type": "string"},
+                "operation": {"type": "string"},
                 "description": {"type": "string"}
             }
         },

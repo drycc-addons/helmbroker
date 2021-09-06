@@ -15,8 +15,8 @@ from openbrokerapi.service_broker import ServiceBroker, Service, \
 
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
     get_addon_path, get_addon_updateable, get_addon_bindable, InstanceLock, \
-    get_instance_file, load_instance_meta, load_binding_meta, \
-    dump_instance_meta, load_addons_meta
+    load_instance_meta, load_binding_meta, dump_instance_meta, \
+    load_addons_meta
 from .tasks import provision, bind, deprovision, update
 
 
@@ -60,6 +60,7 @@ class HelmServiceBroker(ServiceBroker):
             },
             "last_operation": {
                 "state": OperationState.IN_PROGRESS.value,
+                "operation": "provision",
                 "description": (
                     "provision %s in progress at %s" % (
                         instance_id, time.time()))
@@ -154,16 +155,18 @@ class HelmServiceBroker(ServiceBroker):
                     details: DeprovisionDetails,
                     async_allowed: bool,
                     **kwargs) -> DeprovisionServiceSpec:
-        instance_path = get_instance_path(instance_id)
-        if os.path.exists(instance_path):
-            if not os.path.exists(get_instance_file(instance_id)):
-                return DeprovisionServiceSpec(
-                    is_async=False, operation=OperationState.SUCCEEDED)
-        else:
+        if not os.path.exists(get_instance_path(instance_id)):
             raise ErrInstanceDoesNotExist()
-        if not async_allowed:
-            raise ErrAsyncRequired()
-        deprovision.delay(instance_id)
+        with InstanceLock(instance_id):
+            data = load_instance_meta(instance_id)
+            operation = data["last_operation"]["operation"]
+            if operation == "provision":
+                if not async_allowed:
+                    raise ErrAsyncRequired()
+                deprovision.delay(instance_id)
+            elif operation == "deprovision":
+                return DeprovisionServiceSpec(
+                    is_async=True, operation=OperationState(operation))
         return DeprovisionServiceSpec(is_async=True)
 
     def last_operation(self,

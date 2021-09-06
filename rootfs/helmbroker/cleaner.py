@@ -14,13 +14,25 @@ logger = logging.getLogger(__name__)
 
 def clean_instance():
     for instance_id in os.listdir(INSTANCES_PATH):
-        if os.path.exists(get_instance_file(instance_id)):  # noqa
+        if os.path.exists(get_instance_file(instance_id)):
             data = load_instance_meta(instance_id)
             interval = time.time() - data["last_modified_time"]
-            if interval > 3600 * 24 and data["last_operation"]["state"] != OperationState.SUCCEEDED:  # noqa
+            state = data["last_operation"]["state"]
+            operation = data["last_operation"]["operation"]
+            if interval > 3600 * 24 and (
+                operation == "deprovision"
+                    and state != OperationState.SUCCEEDED):
                 deprovision.delay(instance_id)
+            if operation == "deprovision":
+                if state == OperationState.SUCCEEDED or (
+                    interval > 3600 * 24
+                        and state != OperationState.SUCCEEDED):
+                    shutil.rmtree(
+                        os.path.join(INSTANCES_PATH, instance_id),
+                        ignore_errors=True)
         else:
-            shutil.rmtree(os.path.join(INSTANCES_PATH, instance_id), ignore_errors=True)  # noqa
+            shutil.rmtree(
+                os.path.join(INSTANCES_PATH, instance_id), ignore_errors=True)
 
 
 if __name__ == "__main__":
