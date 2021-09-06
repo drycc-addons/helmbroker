@@ -16,6 +16,9 @@ from .utils import command, get_plan_path, get_chart_path, get_cred_value, \
 def provision(instance_id: str, details: ProvisionDetails):
     with InstanceLock(instance_id):
         chart_path = get_chart_path(instance_id)
+        bind_yaml = f'{chart_path}/templates/bind.yaml'
+        if os.path.exists(bind_yaml):
+            os.remove(bind_yaml)
         if os.path.exists(f'{chart_path}/requirements.lock'):
             args = [
                 "dependency",

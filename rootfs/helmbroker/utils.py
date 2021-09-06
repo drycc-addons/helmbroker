@@ -225,7 +225,11 @@ def get_secret_key_value(ns, secret_ref):
     args = [
         "get", "secret", secret_ref['name'], "-n", ns, '-o', f"jsonpath=\'{secret_ref['jsonpath']}\'", # noqa
     ]
-    return command("kubectl", *args)
+    status, output = command("kubectl", *args)
+    if status == 0:
+        import base64
+        output = base64.b64decode(output).decode()
+    return status, output
 
 
 class InstanceLock(object):
