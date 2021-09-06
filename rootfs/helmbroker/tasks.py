@@ -41,7 +41,7 @@ def provision(instance_id: str, details: ProvisionDetails):
             "-f",
             values_file,
             "--set",
-            f"fullnameOverride={details.context['instance_name']}"
+            f"fullnameOverride=helmbroker-{details.context['instance_name']}"
         ]
 
         status, output = command("helm", *args)
@@ -88,7 +88,7 @@ def update(instance_id: str, details: UpdateDetails):
         "-f",
         values_file,
         "--set",
-        f"fullnameOverride={details.context['instance_name']}"
+        f"fullnameOverride=helmbroker-{details.context['instance_name']}"
     ]
 
     status, output = command("helm", *args)
@@ -126,7 +126,7 @@ def bind(instance_id: str,
         "-f",
         values_file,
         "--set",
-        f"fullnameOverride={details.context['instance_name']}"
+        f"fullnameOverride=helmbroker-{details.context['instance_name']}"
     ]
     status, templates = command("helm", *args)  # output: templates.yaml
     if status != 0:
