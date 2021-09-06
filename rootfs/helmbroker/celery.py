@@ -1,12 +1,23 @@
 import os
 from celery import Celery
 
-from flask import current_app, Flask
 
-from helmbroker.config import Config
+class Config:
+    # Celery Configuration Options
+    timezone = "Asia/Shanghai"
+    enable_utc = True
+    task_serializer = 'pickle'
+    accept_content = frozenset([
+       'application/data',
+       'application/text',
+       'application/json',
+       'application/x-python-serialize',
+    ])
+    task_track_started = True
+    task_time_limit = 30 * 60
+    worker_max_tasks_per_child = 200
+    result_expires = 24 * 60 * 60
 
-flask_app = Flask(__name__)
-flask_app.config.from_object(Config)
 
 app = Celery(
     'helmbroker',
@@ -15,8 +26,7 @@ app = Celery(
     include=['helmbroker.tasks']
 )
 
-with flask_app.app_context():
-    app.conf.update(current_app.config)
+app.config_from_object(Config)
 
 if __name__ == '__main__':
     app.start()
