@@ -23,7 +23,6 @@ def provision(instance_id: str, details: ProvisionDetails):
             args = [
                 "dependency",
                 "update",
-                "--skip-refresh",
                 chart_path,
             ]
             command("helm", *args)
