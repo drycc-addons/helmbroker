@@ -6,8 +6,12 @@ import subprocess
 import time
 
 from jsonschema import validate
-
 from .config import INSTANCES_PATH, ADDONS_PATH
+
+
+REGISTRY_CONFIG_SUFFIX = '.config/helm/registry.json'
+REPOSITORY_CACHE_SUFFIX = '.cache/helm/repository'
+REPOSITORY_CONFIG_SUFFIX = '.config/helm/repository'
 
 
 def command(cmd, *args, output_type="text"):
@@ -23,6 +27,21 @@ get_instance_path = lambda instance_id: os.path.join(INSTANCES_PATH, instance_id
 get_instance_file = lambda instance_id: os.path.join(get_instance_path(instance_id), "instance.json") # noqa
 get_chart_path = lambda instance_id: os.path.join(get_instance_path(instance_id), "chart") # noqa
 get_plan_path = lambda instance_id: os.path.join(get_instance_path(instance_id), "plan") # noqa
+
+
+def helm(instance_id, *args, output_type="text"):
+    instance_path = get_instance_path(instance_id)
+    new_args = []
+    new_args.extend(args)
+    new_args.extend([
+        "--registry-config",
+        os.path.join(instance_path, REGISTRY_CONFIG_SUFFIX),
+        "--repository-cache",
+        os.path.join(instance_path, REPOSITORY_CACHE_SUFFIX),
+        "--repository-config",
+        os.path.join(instance_path, REPOSITORY_CONFIG_SUFFIX),
+    ])
+    return command("helm", *args, output_type=output_type)
 
 
 INSTANCE_META_SCHEMA = {

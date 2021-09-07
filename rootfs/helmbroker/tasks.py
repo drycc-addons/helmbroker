@@ -7,9 +7,9 @@ from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
     UpdateDetails, BindDetails
 
 from .celery import app
-from .utils import command, get_plan_path, get_chart_path, get_cred_value, \
+from .utils import get_plan_path, get_chart_path, get_cred_value, \
     InstanceLock, dump_instance_meta, dump_binding_meta, load_instance_meta, \
-    get_instance_file
+    get_instance_file, helm
 
 
 @app.task(serializer='pickle')
@@ -25,7 +25,7 @@ def provision(instance_id: str, details: ProvisionDetails):
                 "update",
                 chart_path,
             ]
-            command("helm", *args)
+            helm(instance_id, *args)
         values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
         args = [
             "install",
@@ -43,7 +43,7 @@ def provision(instance_id: str, details: ProvisionDetails):
             f"fullnameOverride=helmbroker-{details.context['instance_name']}"
         ]
 
-        status, output = command("helm", *args)
+        status, output = helm(instance_id, *args)
         data = load_instance_meta(instance_id)
         if status != 0:
             data["last_operation"]["state"] = OperationState.FAILED.value
@@ -91,7 +91,7 @@ def update(instance_id: str, details: UpdateDetails):
         f"fullnameOverride=helmbroker-{details.context['instance_name']}"
     ]
 
-    status, output = command("helm", *args)
+    status, output = helm(instance_id, *args)
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED.value
         data["last_operation"]["description"] = (
@@ -131,7 +131,7 @@ def bind(instance_id: str,
         "--set",
         f"fullnameOverride=helmbroker-{details.context['instance_name']}"
     ]
-    status, templates = command("helm", *args)  # output: templates.yaml
+    status, templates = helm(instance_id, *args)  # output: templates.yaml
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED.value
         data["last_operation"]["description"] = "binding %s failed: %s" % (instance_id, templates)  # noqa
@@ -179,8 +179,8 @@ def deprovision(instance_id: str):
         data["last_operation"]["description"] = (
             "deprovision %s in progress at %s" % (instance_id, time.time()))
         dump_instance_meta(instance_id, data)
-        status, output = command(
-            "helm",
+        status, output = helm(
+            instance_id,
             "uninstall",
             data["details"]["context"]["instance_name"],
             "--namespace",
