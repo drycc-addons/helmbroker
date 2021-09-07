@@ -166,7 +166,7 @@ class HelmServiceBroker(ServiceBroker):
                 deprovision.delay(instance_id)
             elif operation == "deprovision":
                 return DeprovisionServiceSpec(
-                    is_async=True, operation=OperationState(operation))
+                    is_async=True, operation=operation)
         return DeprovisionServiceSpec(is_async=True)
 
     def last_operation(self,
