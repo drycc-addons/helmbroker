@@ -1,6 +1,6 @@
 import os
-import shutil
 import time
+import shutil
 import yaml
 
 from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
@@ -8,8 +8,8 @@ from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
 
 from .celery import app
 from .utils import command, get_plan_path, get_chart_path, get_cred_value, \
-    InstanceLock, get_instance_file, dump_instance_meta, dump_binding_meta, \
-    load_instance_meta
+    InstanceLock, dump_instance_meta, dump_binding_meta, load_instance_meta, \
+    get_instance_file
 
 
 @app.task(serializer='pickle')
@@ -69,7 +69,8 @@ def update(instance_id: str, details: UpdateDetails):
         data['details']['service_id'] = details.parameters
     data['last_operation'] = {
         "state": OperationState.IN_PROGRESS.value,
-        "description": "update %s in progress at %s" % (instance_id, time.time())  # noqa
+        "description": (
+            "update %s in progress at %s" % (instance_id, time.time()))
     }
     dump_instance_meta(instance_id, data)
     chart_path = get_chart_path(instance_id)
@@ -93,10 +94,12 @@ def update(instance_id: str, details: UpdateDetails):
     status, output = command("helm", *args)
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED.value
-        data["last_operation"]["description"] = "update %s failed: %s" % (instance_id, output)  # noqa
+        data["last_operation"]["description"] = (
+            "update %s failed: %s" % (instance_id, output))
     else:
         data["last_operation"]["state"] = OperationState.SUCCEEDED.value
-        data["last_operation"]["description"] = "update %s succeeded at %s" % (instance_id, time.time())  # noqa
+        data["last_operation"]["description"] = (
+            "update %s succeeded at %s" % (instance_id, time.time()))
     dump_instance_meta(instance_id, data)
 
 
@@ -111,7 +114,8 @@ def bind(instance_id: str,
         "credentials": {},
         "last_operation": {
             "state": OperationState.IN_PROGRESS.value,
-            "description": "binding %s in progress at %s" % (binding_id, time.time())  # noqa
+            "description": (
+                "binding %s in progress at %s" % (binding_id, time.time()))
         }
     }
     dump_binding_meta(instance_id, data)
@@ -166,9 +170,14 @@ def bind(instance_id: str,
 @app.task()
 def deprovision(instance_id: str):
     with InstanceLock(instance_id):
+        shutil.copy(get_instance_file(instance_id), "%s.%s" % (
+            get_instance_file(instance_id), time.time()
+        ))
         data = load_instance_meta(instance_id)
+        data["last_operation"]["operation"] = "deprovision"
         data["last_operation"]["state"] = OperationState.IN_PROGRESS.value
-        data["last_operation"]["description"] = "deprovision %s in progress at %s" % (instance_id, time.time())  # noqa
+        data["last_operation"]["description"] = (
+            "deprovision %s in progress at %s" % (instance_id, time.time()))
         dump_instance_meta(instance_id, data)
         status, output = command(
             "helm",
@@ -181,13 +190,9 @@ def deprovision(instance_id: str):
             data["last_operation"]["state"] = OperationState.FAILED.value
             data["last_operation"]["description"] = (
                 "deprovision error:\n%s" % output)
-            shutil.copy(get_instance_file(instance_id), "%s.%s" % (
-                get_instance_file(instance_id),
-                time.time()
-            ))
         else:
-            data["last_operation"]["state"] = OperationState.SUCCEEDED.value
+            data["last_operation"]["state"] = (
+                OperationState.SUCCEEDED.value)
             data["last_operation"]["description"] = (
                 "deprovision succeeded at %s" % time.time())
-        os.remove(get_instance_file(instance_id))
         dump_instance_meta(instance_id, data)
