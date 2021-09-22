@@ -41,4 +41,4 @@ cluster_domain: "cluster.local"
 # This will be the hostname that is used to build endpoints such as "drycc-helmbroker.$HOSTNAME"
 platform_domain: ""
 # Whether cert_manager is enabled to automatically generate helmbroker certificates
-cert_manager_enabled: "true"
+cert_manager_enabled: true
