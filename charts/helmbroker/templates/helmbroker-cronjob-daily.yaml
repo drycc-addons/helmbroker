@@ -5,10 +5,10 @@ metadata:
   labels:
     heritage: drycc
   annotations:
-    component.drycc.cc/version: {{ .Values.image_tag }}
+    component.drycc.cc/version: {{ .Values.imageTag }}
 spec:
   schedule: "0 0 * * *"
-  concurrencyPolicy: {{ .Values.concurrency_policy }}
+  concurrencyPolicy: {{ .Values.concurrencyPolicy }}
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
   jobTemplate:
@@ -18,8 +18,8 @@ spec:
           restartPolicy: OnFailure
           serviceAccount: drycc-helmbroker
           containers:
-          - image: {{.Values.image_registry}}/{{.Values.image_org}}/helmbroker:{{.Values.image_tag}}
-            imagePullPolicy: {{.Values.image_pull_policy}}
+          - image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
+            imagePullPolicy: {{.Values.imagePullPolicy}}
             name: drycc-helmbroker-cleaner
             command:
               - /bin/bash

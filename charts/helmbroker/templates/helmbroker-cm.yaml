@@ -6,7 +6,7 @@ metadata:
   labels:
     heritage: drycc
   annotations:
-    component.drycc.cc/version: {{ .Values.image_tag }}
+    component.drycc.cc/version: {{ .Values.imageTag }}
 data:
   repositories: |
     {{- range .Values.repositories }}

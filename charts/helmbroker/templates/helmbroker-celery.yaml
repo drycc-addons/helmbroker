@@ -5,9 +5,9 @@ metadata:
   labels:
     heritage: drycc
   annotations:
-    component.drycc.cc/version: {{ .Values.image_tag }}
+    component.drycc.cc/version: {{ .Values.imageTag }}
 spec:
-  replicas: {{ .Values.celery_replicas }}
+  replicas: {{ .Values.celeryReplicas }}
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -24,8 +24,8 @@ spec:
       serviceAccount: drycc-helmbroker
       containers:
         - name: drycc-helmbroker-celery
-          image: {{.Values.image_registry}}/{{.Values.image_org}}/helmbroker:{{.Values.image_tag}}
-          imagePullPolicy: {{.Values.image_pull_policy}}
+          image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
+          imagePullPolicy: {{.Values.imagePullPolicy}}
           command:
             - /bin/bash
             - -c

@@ -5,7 +5,7 @@ metadata:
   labels:
     heritage: drycc
   annotations:
-    component.drycc.cc/version: {{ .Values.image_tag }}
+    component.drycc.cc/version: {{ .Values.imageTag }}
 spec:
   replicas: {{ .Values.replicas }}
   strategy:
@@ -24,8 +24,8 @@ spec:
       serviceAccount: drycc-helmbroker
       initContainers:
         - name: loader
-          image: {{.Values.image_registry}}/{{.Values.image_org}}/helmbroker:{{.Values.image_tag}}
-          imagePullPolicy: {{.Values.image_pull_policy}}
+          image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
+          imagePullPolicy: {{.Values.imagePullPolicy}}
           command:
             - /bin/bash
             - -c
@@ -35,8 +35,8 @@ spec:
           {{- include "helmbroker.volumeMounts" . | indent 10 }}
       containers:
         - name: drycc-helmbroker
-          image: {{.Values.image_registry}}/{{.Values.image_org}}/helmbroker:{{.Values.image_tag}}
-          imagePullPolicy: {{.Values.image_pull_policy}}
+          image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
+          imagePullPolicy: {{.Values.imagePullPolicy}}
           livenessProbe:
             httpGet:
               path: /healthz

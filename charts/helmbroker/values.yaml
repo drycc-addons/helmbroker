@@ -1,17 +1,17 @@
-image_org: "drycc"
-image_tag: "canary"
-image_registry: "docker.io"
-image_pull_policy: "Always"
+imageOrg: "drycc"
+imageTag: "canary"
+imageRegistry: "docker.io"
+imagePullPolicy: "Always"
 replicas: 1
-# limits_cpu: "100m"
-# limits_memory: "50Mi"
+# limitsCpu: "100m"
+# limitsMemory: "50Mi"
 
 ## config the helm-broker repositories
 repositories:
 - name: drycc-helm-broker
   url: https://github.com/drycc/addons/releases/download/latest/index.yaml
 
-celery_replicas: 1
+celeryReplicas: 1
 
 # broker_credentials:
 # Optional Usernames and passwords that will be required to communicate with service broker
@@ -30,15 +30,15 @@ persistence:
   storageClass: ""
   volumeName: ""
 
-ingress_class: ""
+ingressClass: ""
 # A domain name consists of one or more parts.
 # Periods (.) are used to separate these parts.
 # Each part must be 1 to 63 characters in length and can contain lowercase letters, digits, and hyphens (-).
 # It must start and end with a lowercase letter or digit.
-cluster_domain: "cluster.local"
+clusterDomain: "cluster.local"
 # The public resolvable hostname to build your cluster with.
 #
 # This will be the hostname that is used to build endpoints such as "drycc-helmbroker.$HOSTNAME"
-platform_domain: ""
+platformDomain: ""
 # Whether cert_manager is enabled to automatically generate helmbroker certificates
-cert_manager_enabled: true
+certManagerEnabled: true
