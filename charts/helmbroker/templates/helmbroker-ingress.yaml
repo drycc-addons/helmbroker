@@ -9,10 +9,10 @@ metadata:
     heritage: "{{ .Release.Service }}"
   annotations:
     kubernetes.io/tls-acme: "true"
-    {{- if not (eq .Values.ingressClass "") }}
-    kubernetes.io/ingress.class: "{{ .Values.ingressClass }}"
-    {{- end }}
 spec:
+  {{- if not (eq .Values.ingressClass "") }}
+  ingressClassName: "{{ .Values.ingressClass }}"
+  {{ end }}
   rules:
   - host: drycc-helmbroker.{{ .Values.platformDomain }}
     http:
