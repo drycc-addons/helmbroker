@@ -5,7 +5,8 @@
 
 # fail hard and fast even on pipelines
 set -eo pipefail
-
+# shellcheck disable=SC1091
+source /app/.venv/bin/activate
 # spawn a gunicorn server in the background
 echo ""
 echo "Starting up Gunicorn"
