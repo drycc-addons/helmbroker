@@ -8,7 +8,7 @@ set -eo pipefail
 # spawn a gunicorn server in the background
 echo ""
 echo "Starting up Gunicorn"
-gunicorn -c /app/helmbroker/gunicorn/config.py helmbroker.wsgi &
+gunicorn -c /workspace/helmbroker/gunicorn/config.py helmbroker.wsgi &
 
 # smart shutdown on SIGTERM (SIGINT is handled by gunicorn)
 function on_exit() {

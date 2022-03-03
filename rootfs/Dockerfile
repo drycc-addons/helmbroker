@@ -3,28 +3,28 @@ FROM docker.io/drycc/base:bullseye
 RUN adduser --system \
 	--shell /bin/bash \
 	--disabled-password \
-	--home /app \
+	--home /workspace \
 	--group \
 	drycc
 
 ENV PYTHON_VERSION="3.10.2" \
   HELM_VERSION="3.8.0"
 
-COPY . /app
+COPY . /workspace
 
-WORKDIR /app
+WORKDIR /workspace
 RUN buildDeps='musl-dev openssl' \
   && install-packages $buildDeps \
   && install-stack python $PYTHON_VERSION \
   && install-stack helm $HELM_VERSION && . init-stack \
-  && python3 -m venv /app/.venv \
-  && source /app/.venv/bin/activate \
-  && pip3 install --disable-pip-version-check --no-cache-dir -r /app/requirements.txt \
-  && chown -R drycc:drycc /app \
+  && python3 -m venv /workspace/.venv \
+  && source /workspace/.venv/bin/activate \
+  && pip3 install --disable-pip-version-check --no-cache-dir -r /workspace/requirements.txt \
+  && chown -R drycc:drycc /workspace \
   # set env
-  && echo "source /app/.venv/bin/activate" >> /opt/drycc/python/profile.d/python.sh \
+  && echo "source /workspace/.venv/bin/activate" >> /opt/drycc/python/profile.d/python.sh \
   # cleanup
-  && scanelp /app/.venv/lib > runtime.txt \
+  && scanelp /workspace/.venv/lib > runtime.txt \
   && apt-get purge -y --auto-remove $buildDeps \
   && install-packages $(< runtime.txt) \
   && apt-get autoremove -y \
@@ -45,6 +45,6 @@ RUN buildDeps='musl-dev openssl' \
   && mkdir -p /usr/share/man/man{1..8}
 
 USER drycc
-WORKDIR /app
-CMD ["/app/bin/boot"]
+WORKDIR /workspace
+CMD ["/workspace/bin/boot"]
 EXPOSE 8000
