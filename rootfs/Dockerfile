@@ -13,13 +13,16 @@ ENV PYTHON_VERSION="3.10.2" \
 COPY . /app
 
 WORKDIR /app
-RUN buildDeps='musl-dev openssl'; \
-    install-packages $buildDeps \
+RUN buildDeps='musl-dev openssl' \
+  && install-packages $buildDeps \
   && install-stack python $PYTHON_VERSION \
   && install-stack helm $HELM_VERSION && . init-stack \
   && python3 -m venv /app/.venv \
   && source /app/.venv/bin/activate \
   && pip3 install --disable-pip-version-check --no-cache-dir -r /app/requirements.txt \
+  && chown -R drycc:drycc /app \
+  # set env
+  && echo "source /app/.venv/bin/activate" >> /opt/drycc/python/profile.d/python.sh \
   # cleanup
   && scanelp /app/.venv/lib > runtime.txt \
   && apt-get purge -y --auto-remove $buildDeps \
@@ -43,5 +46,5 @@ RUN buildDeps='musl-dev openssl'; \
 
 USER drycc
 WORKDIR /app
-CMD ["PATH=/app/.venv/bin:\$PATH", "/app/bin/boot"]
+CMD ["/app/bin/boot"]
 EXPOSE 8000

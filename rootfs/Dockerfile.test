@@ -23,6 +23,9 @@ RUN buildDeps='musl-dev openssl'; \
   && source /app/.venv/bin/activate \
   && pip3 install --disable-pip-version-check --no-cache-dir -r /app/requirements.txt \
   && pip3 install --disable-pip-version-check --no-cache-dir -r /app/dev_requirements.txt \
+  && chown -R drycc:drycc /app \
+  # set env
+  && echo "source /app/.venv/bin/activate" >> /opt/drycc/python/profile.d/python.sh \
   # cleanup
   && scanelp /app/.venv/lib > runtime.txt \
   && apt-get purge -y --auto-remove $buildDeps \
