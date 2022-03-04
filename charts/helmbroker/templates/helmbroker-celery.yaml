@@ -26,11 +26,10 @@ spec:
         - name: drycc-helmbroker-celery
           image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
           imagePullPolicy: {{.Values.imagePullPolicy}}
-          command:
-            - /bin/bash
-            - -c
           args:
-            - celery -A helmbroker worker --autoscale=32,1 --loglevel=info
+          - /bin/bash
+          - -c
+          - celery -A helmbroker worker --autoscale=32,1 --loglevel=info
           {{- include "helmbroker.limits" . | indent 10 }}
           {{- include "helmbroker.envs" . | indent 10 }}
           {{- include "helmbroker.volumeMounts" . | indent 10 }}

@@ -49,7 +49,8 @@ full-clean: check-docker
 test: test-style test-unit test-functional
 
 test-style: docker-build-test
-	docker run --rm -v ${CURDIR}:/test -w /test/rootfs ${IMAGE}.test /test/rootfs/bin/test-style
+	$(shell chown -R 1001:1001 ${CURDIR})
+	docker run --rm -v ${CURDIR}:/tmp/test -w /tmp/test/rootfs ${IMAGE}.test /tmp/test/rootfs/bin/test-style
 	${SHELLCHECK_PREFIX} $(SHELL_SCRIPTS)
 
 test-unit: docker-build-test
@@ -63,6 +64,6 @@ test-integration:
 
 upload-coverage:
 	$(eval CI_ENV := $(shell curl -s https://codecov.io/env | bash))
-	docker run --rm ${CI_ENV} -v ${CURDIR}:/test -w /test/rootfs ${IMAGE}.test /test/rootfs/bin/upload-coverage
+	docker run --rm ${CI_ENV} -v ${CURDIR}:/tmp/test -w /tmp/test/rootfs ${IMAGE}.test /tmp/test/rootfs/bin/upload-coverage
 
 .PHONY: check-kubectl check-docker build docker-build docker-build-test deploy clean commit-hook full-clean test test-style test-unit test-functional test-integration upload-coverage

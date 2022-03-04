@@ -26,11 +26,10 @@ spec:
         - name: loader
           image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
           imagePullPolicy: {{.Values.imagePullPolicy}}
-          command:
-            - /bin/bash
-            - -c
           args:
-            - python -m helmbroker.loader
+          - /bin/bash
+          - -c
+          - python -m helmbroker.loader
           {{- include "helmbroker.envs" . | indent 10 }}
           {{- include "helmbroker.volumeMounts" . | indent 10 }}
       containers:
