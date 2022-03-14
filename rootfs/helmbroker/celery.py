@@ -17,6 +17,7 @@ class Config:
     task_time_limit = 30 * 60
     worker_max_tasks_per_child = 200
     result_expires = 24 * 60 * 60
+    worker_cancel_long_running_tasks_on_connection_loss = True
 
 
 app = Celery(
