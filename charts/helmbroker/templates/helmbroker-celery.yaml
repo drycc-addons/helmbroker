@@ -21,10 +21,8 @@ spec:
       labels:
         app: drycc-helmbroker-celery
     spec:
+      {{- include "common.affinities.nodes.soft" (dict "key" "app" "values" (list "drycc-helmbroker-celery")) | indent 6 }}
       serviceAccount: drycc-helmbroker
-      {{- if .Values.global.common }}
-      {{- include "common.affinity" (dict "key" "app" "values" (list "drycc-helmbroker-celery")) | indent 6 }}
-      {{- end }}
       containers:
         - name: drycc-helmbroker-celery
           image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
