@@ -21,9 +21,7 @@ spec:
       labels:
         app: drycc-helmbroker
     spec:
-      {{- if .Values.global.common }}
-      {{- include "common.affinity" (dict "key" "app" "values" (list "drycc-helmbroker")) | indent 6 }}
-      {{- end }}
+      {{- include "common.affinities.nodes.soft" (dict "key" "app" "values" (list "drycc-helmbroker")) | indent 6 }}
       serviceAccount: drycc-helmbroker
       initContainers:
         - name: loader
