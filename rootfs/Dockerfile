@@ -4,7 +4,8 @@ ENV DRYCC_UID=1001 \
   DRYCC_GID=1001 \
   DRYCC_HOME_DIR=/workspace \
   PYTHON_VERSION="3.10.4" \
-  HELM_VERSION="3.8.0"
+  HELM_VERSION="3.8.0" \
+  KUBECTL_VERSION="1.23.4"
 
 RUN groupadd drycc --gid ${DRYCC_GID} \
   && useradd drycc -u ${DRYCC_UID} -g ${DRYCC_GID} -s /bin/bash -m -d ${DRYCC_HOME_DIR}
@@ -12,10 +13,11 @@ RUN groupadd drycc --gid ${DRYCC_GID} \
 COPY . ${DRYCC_HOME_DIR}
 WORKDIR ${DRYCC_HOME_DIR}
 
-RUN buildDeps='musl-dev openssl' \
-  && install-packages ${buildDeps} \
+RUN buildDeps='musl-dev' \
+  && install-packages ${buildDeps} openssl ca-certificates \
   && install-stack python ${PYTHON_VERSION} \
-  && install-stack helm ${HELM_VERSION} && . init-stack \
+  && install-stack helm ${HELM_VERSION} \
+  && install-stack kubectl ${KUBECTL_VERSION} && . init-stack \
   && python3 -m venv ${DRYCC_HOME_DIR}/.venv \
   && source ${DRYCC_HOME_DIR}/.venv/bin/activate \
   && pip3 install --disable-pip-version-check --no-cache-dir -r ${DRYCC_HOME_DIR}/requirements.txt \
