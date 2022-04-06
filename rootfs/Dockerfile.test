@@ -3,7 +3,7 @@ FROM docker.io/drycc/base:bullseye
 ENV DRYCC_UID=1001 \
   DRYCC_GID=1001 \
   DRYCC_HOME_DIR=/workspace \
-  PYTHON_VERSION="3.10.2" \
+  PYTHON_VERSION="3.10.4" \
   HELM_VERSION="3.8.0" \
   KUBECTL_VERSION="1.23.4"
 
