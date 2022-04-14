@@ -1,6 +1,6 @@
 imageOrg: "drycc"
 imageTag: "canary"
-imageRegistry: "docker.io"
+imageRegistry: "registry.drycc.cc"
 imagePullPolicy: "Always"
 replicas: 1
 # limitsCpu: "100m"
