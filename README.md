@@ -11,11 +11,11 @@ We welcome your input! If you have feedback, please [submit an issue][issues]. I
 
 # About
 
-Helm Broker is a [Service Broker](https://github.com/openservicebrokerapi/servicebroker) that exposes Helm charts as Service Classes in [Service Catalog](https://svc-cat.io/). To do so, Helm Broker uses the concept of addons. An addon is an abstraction layer over a Helm chart which provides all information required to convert the chart into a Service Class.
+Helm Broker is a [Service Broker](https://github.com/openservicebrokerapi/servicebroker) that exposes Helm charts as Service Classes in [Service Catalog](https://service-catalog.drycc.cc/). To do so, Helm Broker uses the concept of addons. An addon is an abstraction layer over a Helm chart which provides all information required to convert the chart into a Service Class.
 
 You can install Helm Broker either as a standalone project, or as part of [Drycc workflow](https://www.drycc.cc/). 
 
-To see all addons that Helm Broker provides, go to the [`addons`](https://github.com/drycc/addons) repository.
+To see all addons that Helm Broker provides, go to the [`addons`](https://github.com/drycc-addons/addons) repository.
 
 Helm Broker implements the [Open Service Broker API](https://github.com/openservicebrokerapi/servicebroker/blob/v2.14/profile.md#service-metadata) (OSB API). To be compliant with Service Catalog version used in drycc workflow.
 
