@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 def clean_instance():
+    if not os.path.exists(INSTANCES_PATH):
+        return
     for instance_id in os.listdir(INSTANCES_PATH):
         if os.path.exists(get_instance_file(instance_id)):
             data = load_instance_meta(instance_id)
