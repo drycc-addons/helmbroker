@@ -18,10 +18,15 @@ celeryReplicas: 1
 username: admin
 password: admin
 
+# Configuring this will no longer use the built-in rabbitmq component
+rabbitmqUrl: ""
+
+# Any custom controller environment variables
+# can be specified as key-value pairs under environment
+# this is usually a non required setting.
 environment:
-  RESERVED_NAMES: "drycc, drycc-helmbroker"
-  # HELMBROKER_CELERY_BROKER: ""
-  # HELMBROKER_CELERY_BACKEND: ""
+  # DRYCC_DEBUG: true
+  # HELMBROKER_ROOT: /etc/helmbroker
 
 api:
   nodeAffinityPreset:

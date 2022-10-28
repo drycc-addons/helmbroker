@@ -7,6 +7,23 @@ env:
   value: {{ if .Values.username | default "" | ne "" }}{{ .Values.username }}{{ else }}{{ randAlphaNum 32 }}{{ end }}
 - name: PASSWORD
   value: {{ if .Values.password | default "" | ne "" }}{{ .Values.password }}{{ else }}{{ randAlphaNum 32 }}{{ end }}
+{{- if (.Values.rabbitmqUrl) }}
+- name: DRYCC_RABBITMQ_URL
+  value: {{ .Values.rabbitmqUrl }}
+{{- else if eq .Values.global.rabbitmqLocation "on-cluster" }}
+- name: "DRYCC_RABBITMQ_USERNAME"
+  valueFrom:
+    secretKeyRef:
+      name: rabbitmq-creds
+      key: username
+- name: "DRYCC_RABBITMQ_PASSWORD"
+  valueFrom:
+    secretKeyRef:
+      name: rabbitmq-creds
+      key: password
+- name: "DRYCC_RABBITMQ_URL"
+  value: "amqp://$(DRYCC_RABBITMQ_USERNAME):$(DRYCC_RABBITMQ_PASSWORD)@drycc-rabbitmq.{{$.Release.Namespace}}.svc.{{$.Values.global.clusterDomain}}:5672/drycc"
+{{- end }}
 {{- range $key, $value := .Values.environment }}
 - name: {{ $key }}
   value: {{ $value | quote }}
