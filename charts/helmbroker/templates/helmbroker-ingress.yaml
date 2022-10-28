@@ -10,15 +10,15 @@ metadata:
   annotations:
     kubernetes.io/tls-acme: "true"
 spec:
-  {{- if not (eq .Values.ingressClass "") }}
-  ingressClassName: "{{ .Values.ingressClass }}"
+  {{- if not (eq .Values.global.ingressClass "") }}
+  ingressClassName: "{{ .Values.global.ingressClass }}"
   {{ end }}
   rules:
-  - host: drycc-helmbroker.{{ .Values.platformDomain }}
+  - host: drycc-helmbroker.{{ .Values.global.platformDomain }}
     http:
       paths:
       - pathType: Prefix
-        {{- if eq .Values.ingressClass "gce" "alb" }}
+        {{- if eq .Values.global.ingressClass "gce" "alb" }}
         path: /*
         {{- else }}{{/* Has annotations but ingress class is not "gce" nor "alb" */}}
         path: /
@@ -28,9 +28,9 @@ spec:
             name: drycc-helmbroker
             port:
               number: 80
-  {{- if .Values.certManagerEnabled }}
+  {{- if .Values.global.certManagerEnabled }}
   tls:
     - secretName: drycc-helmbroker-certificate-auto
       hosts:
-        - drycc-helmbroker.{{ .Values.platformDomain }}
+        - drycc-helmbroker.{{ .Values.global.platformDomain }}
   {{- end }}
