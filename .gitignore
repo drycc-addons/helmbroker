@@ -41,3 +41,4 @@ vendor/
 # generated bintray scripts during ci
 client/_scripts/ci/bintray-ci.json
 .idea
+.vscode/

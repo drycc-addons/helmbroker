@@ -26,6 +26,16 @@ spec:
         podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.celery.podAntiAffinityPreset.type "key" .Values.celery.podAntiAffinityPreset.key "values" .Values.celery.podAntiAffinityPreset.values ) | nindent 10 }}
         nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.celery.nodeAffinityPreset.type "key" .Values.celery.nodeAffinityPreset.key "values" .Values.celery.nodeAffinityPreset.values ) | nindent 10 }}
       serviceAccount: drycc-helmbroker
+      initContainers:
+        - name: drycc-helmbroker-celery-init
+          image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/python-dev:latest
+          imagePullPolicy: {{.Values.imagePullPolicy}}
+          args:
+          - netcat
+          - -v
+          - -a
+          - $(DRYCC_HELMBROKER_SERVICE_HOST):$(DRYCC_HELMBROKER_SERVICE_PORT)
+        {{- include "helmbroker.envs" . | indent 10 }}
       containers:
         - name: drycc-helmbroker-celery
           image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
