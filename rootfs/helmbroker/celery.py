@@ -22,8 +22,7 @@ class Config:
 
 app = Celery(
     'helmbroker',
-    broker=os.environ.get("HELMBROKER_CELERY_BROKER"),
-    backend=os.environ.get("HELMBROKER_CELERY_BACKEND"),
+    broker=os.environ.get("DRYCC_RABBITMQ_URL"),
     include=['helmbroker.tasks']
 )
 
