@@ -1,4 +1,4 @@
-imageOrg: "drycc"
+imageOrg: "drycc-addons"
 imageTag: "canary"
 imageRegistry: "registry.drycc.cc"
 imagePullPolicy: "Always"

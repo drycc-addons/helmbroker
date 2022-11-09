@@ -37,7 +37,7 @@ spec:
           {{- include "helmbroker.envs" . | indent 10 }}
           {{- include "helmbroker.volumeMounts" . | indent 10 }}
         - name: drycc-helmbroker-init
-          image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/python-dev:latest
+          image: registry.drycc.cc/drycc/python-dev:latest
           imagePullPolicy: {{.Values.imagePullPolicy}}
           args:
           - netcat
