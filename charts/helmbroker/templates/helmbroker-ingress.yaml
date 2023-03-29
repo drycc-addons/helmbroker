@@ -30,7 +30,7 @@ spec:
               number: 80
   {{- if .Values.global.certManagerEnabled }}
   tls:
-    - secretName: drycc-helmbroker-certificate-auto
+    - secretName: drycc-helmbroker-auto-tls
       hosts:
         - drycc-helmbroker.{{ .Values.global.platformDomain }}
   {{- end }}
