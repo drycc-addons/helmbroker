@@ -5,6 +5,9 @@ dependencies:
   - name: common
     repository: oci://registry.drycc.cc/charts
     version: ~1.1.1
+  - name: gateway
+    repository: oci://registry.drycc.cc/charts-testing
+    version: x.x.x
   - name: rabbitmq
     repository: oci://registry.drycc.cc/charts-testing
     version: x.x.x

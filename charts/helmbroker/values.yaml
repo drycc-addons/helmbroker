@@ -98,4 +98,4 @@ global:
   # This will be the hostname that is used to build endpoints such as "drycc-helmbroker.$HOSTNAME"
   platformDomain: ""
   # Whether cert_manager is enabled to automatically generate helmbroker certificates
-  certManagerEnabled: true
+  certManagerEnabled: false
