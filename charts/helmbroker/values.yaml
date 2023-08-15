@@ -35,15 +35,13 @@ api:
     values:
     - "true"
   podAffinityPreset:
-    key: "security"
     type: ""
-    values:
-    - "drycc-security"
+    extraMatchLabels:
+      security: "drycc-security"
   podAntiAffinityPreset:
-    key: "app"
     type: "soft"
-    values:
-    - "drycc-helmbroker"
+    extraMatchLabels:
+      app: "drycc-helmbroker"
 
 celery:
   nodeAffinityPreset:
@@ -52,15 +50,13 @@ celery:
     values:
     - "true"
   podAffinityPreset:
-    key: "security"
     type: ""
-    values:
-    - "drycc-security"
+    extraMatchLabels:
+      security: "drycc-security"
   podAntiAffinityPreset:
-    key: "app"
     type: "soft"
-    values:
-    - "drycc-helmbroker-celery"
+    extraMatchLabels:
+      app: "drycc-helmbroker-celery"
 
 persistence:
   enabled: true
