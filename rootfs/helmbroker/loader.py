@@ -105,7 +105,7 @@ def load_addons(repository):
             addon_tgz_url = f'{url}/{tgz_name}.tgz'
             download_file(addon_tgz_url, ADDONS_PATH)
             extract_tgz(f'{ADDONS_PATH}/{tgz_name}.tgz',
-                        f'{ADDONS_PATH}/{tgz_name}')
+                        f'{ADDONS_PATH}')
         addons_meta_file()
 
 

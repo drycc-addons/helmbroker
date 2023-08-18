@@ -2,6 +2,7 @@ import os
 import time
 import shutil
 import yaml
+import logging
 
 from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
     UpdateDetails, BindDetails
@@ -10,6 +11,8 @@ from .celery import app
 from .utils import get_plan_path, get_chart_path, get_cred_value, \
     InstanceLock, dump_instance_meta, dump_binding_meta, load_instance_meta, \
     get_instance_file, helm
+
+logger = logging.getLogger(__name__)
 
 
 @app.task(serializer='pickle')
@@ -42,7 +45,10 @@ def provision(instance_id: str, details: ProvisionDetails):
             "--set",
             f"fullnameOverride=helmbroker-{details.context['instance_name']}"
         ]
-
+        logger.info(f"helm install parameters :{details.parameters}")
+        logger.info(f"helm install parameters type:{type(details.parameters)}")
+        # for k, v in details.parameters:
+        #     args.append("--set", k, v)
         status, output = helm(instance_id, *args)
         data = load_instance_meta(instance_id)
         if status != 0:
@@ -90,7 +96,8 @@ def update(instance_id: str, details: UpdateDetails):
         "--set",
         f"fullnameOverride=helmbroker-{details.context['instance_name']}"
     ]
-
+    logger.info(f"helm upgrade parameters: {details.parameters}")
+    logger.info(f"helm upgrade parameters type: {type(details.parameters)}")
     status, output = helm(instance_id, *args)
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED.value
