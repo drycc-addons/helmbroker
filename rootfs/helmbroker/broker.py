@@ -1,6 +1,7 @@
 import os
 import time
 import shutil
+import logging
 from typing import Union, List, Optional
 
 from openbrokerapi.catalog import ServicePlan
@@ -18,6 +19,8 @@ from .utils import get_instance_path, get_chart_path, get_plan_path, \
     load_instance_meta, load_binding_meta, dump_instance_meta, \
     load_addons_meta
 from .tasks import provision, bind, deprovision, update
+
+logger = logging.getLogger(__name__)
 
 
 class HelmServiceBroker(ServiceBroker):
@@ -147,6 +150,8 @@ class HelmServiceBroker(ServiceBroker):
                 details.service_id, details.plan_id)
             # add the new plan
             shutil.copytree(addon_plan_path, plan_path)
+        logger.info(f"service update parameters: {details.parameters}")
+        logger.info(f"service update parameters type: {type(details.parameters)}")  # noqa
         update.delay(instance_id, details)
         return UpdateServiceSpec(is_async=True)
 

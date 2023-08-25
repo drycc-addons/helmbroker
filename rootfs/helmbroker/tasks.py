@@ -45,10 +45,11 @@ def provision(instance_id: str, details: ProvisionDetails):
             "--set",
             f"fullnameOverride=helmbroker-{details.context['instance_name']}"
         ]
+
+        for k, v in details.parameters:
+            args.extend(["--set", f"{k}={v}"])
         logger.info(f"helm install parameters :{details.parameters}")
         logger.info(f"helm install parameters type:{type(details.parameters)}")
-        # for k, v in details.parameters:
-        #     args.append("--set", k, v)
         status, output = helm(instance_id, *args)
         data = load_instance_meta(instance_id)
         if status != 0:
@@ -72,7 +73,7 @@ def update(instance_id: str, details: UpdateDetails):
     if details.context:
         data['details']['context'] = details.context
     if details.parameters:
-        data['details']['service_id'] = details.parameters
+        data['details']['parameters'] = details.parameters
     data['last_operation'] = {
         "state": OperationState.IN_PROGRESS.value,
         "description": (
@@ -96,6 +97,8 @@ def update(instance_id: str, details: UpdateDetails):
         "--set",
         f"fullnameOverride=helmbroker-{details.context['instance_name']}"
     ]
+    for k, v in details.parameters:
+        args.extend(["--set", f"{k}={v}"])
     logger.info(f"helm upgrade parameters: {details.parameters}")
     logger.info(f"helm upgrade parameters type: {type(details.parameters)}")
     status, output = helm(instance_id, *args)
