@@ -68,12 +68,17 @@ def addons_meta_file():
             meta = yaml.load(f.read(), Loader=yaml.Loader)
             meta['tags'] = meta.get('tags').split(', ') if meta.get('tags') else [] # noqa
             meta['plans'] = []
-            addons_dict[meta['name']] = meta
-
-    for plan_meta in plans_meta:
-        with open(f'{ADDONS_PATH}/{"/".join(plan_meta)}', 'r') as f:
-            addons_mata = yaml.load(f.read(), Loader=yaml.Loader)
-            addons_dict[f'{"-".join(plan_meta[0].split("-")[0:-1])}']['plans'].append(addons_mata) # noqa
+            addons_dict[meta['displayName']] = meta
+        addon_plans_meta = []
+        for plan_meta in plans_meta:
+            if plan_meta[0] == meta['displayName']:
+                addon_plans_meta.append(plan_meta)
+            elif f'{"-".join(plan_meta[0].split("-")[0:-1])}' == meta['displayName']: # noqa
+                addon_plans_meta.append(plan_meta)
+        for addon_plan_meta in addon_plans_meta:
+            with open(f'{ADDONS_PATH}/{"/".join(addon_plan_meta)}', 'r') as f:
+                addons_mata = yaml.load(f.read(), Loader=yaml.Loader)
+                addons_dict[meta['displayName']]['plans'].append(addons_mata) # noqa
     dump_addons_meta(addons_dict)
 
 
@@ -98,7 +103,7 @@ def load_addons(repository):
     save_file(remote_index, ADDONS_PATH, index_name)
     remote_index = yaml.load(remote_index, Loader=yaml.Loader)
     # save index.yaml addons
-    for k, v in remote_index.get('entries', {}).items():
+    for _, v in remote_index.get('entries', {}).items():
         for _ in v:
             url = "/".join(repository["url"].split("/")[0:-1])
             tgz_name = f'{_["name"]}-{_["version"]}'
@@ -106,7 +111,7 @@ def load_addons(repository):
             download_file(addon_tgz_url, ADDONS_PATH)
             extract_tgz(f'{ADDONS_PATH}/{tgz_name}.tgz',
                         f'{ADDONS_PATH}')
-        addons_meta_file()
+    addons_meta_file()
 
 
 if __name__ == '__main__':
