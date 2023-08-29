@@ -17,7 +17,7 @@ from openbrokerapi.service_broker import ServiceBroker, Service, \
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
     get_addon_path, get_addon_updateable, get_addon_bindable, InstanceLock, \
     load_instance_meta, load_binding_meta, dump_instance_meta, \
-    load_addons_meta
+    load_addons_meta, get_addon_allow_paras, verify_parameters
 from .tasks import provision, bind, deprovision, update
 
 logger = logging.getLogger(__name__)
@@ -46,6 +46,11 @@ class HelmServiceBroker(ServiceBroker):
             raise ErrInstanceAlreadyExists()
         if not async_allowed:
             raise ErrAsyncRequired()
+        allow_paras = get_addon_allow_paras(details.service_id)
+        not_allow_keys = verify_parameters(allow_paras, details.parameters)
+        if not_allow_keys:
+            raise ErrBadRequest(
+                msg="Instance parameters %s does not allowed" % not_allow_keys)
         os.makedirs(instance_path, exist_ok=True)
         chart_path, plan_path = (
             get_chart_path(instance_id), get_plan_path(instance_id))
@@ -140,6 +145,11 @@ class HelmServiceBroker(ServiceBroker):
         if not is_plan_updateable:
             raise ErrBadRequest(
                 msg="Instance %s does not updateable" % instance_id)
+        allow_paras = get_addon_allow_paras(details.service_id)
+        not_allow_keys = verify_parameters(allow_paras, details.parameters)
+        if not_allow_keys:
+            raise ErrBadRequest(
+                msg="Instance parameters %s does not allowed" % not_allow_keys)
         if not async_allowed:
             raise ErrAsyncRequired()
         if details.plan_id is not None:

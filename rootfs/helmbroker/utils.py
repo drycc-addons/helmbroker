@@ -217,6 +217,11 @@ def get_addon_bindable(service_id):
     return service.get('bindable', False)
 
 
+def get_addon_allow_parameters(service_id):
+    service = get_addon_meta(service_id)
+    return service.get('allow_parameters', [])
+
+
 def get_cred_value(ns, source):
     if source.get('serviceRef'):
         return get_service_key_value(ns, source['serviceRef'])
@@ -271,3 +276,20 @@ class InstanceLock(object):
     def __del__(self):
         if hasattr(self, "fileno"):
             fcntl.flock(self.fileno, fcntl.LOCK_UN)
+
+
+def verify_parameters(allow_paras, paras):
+    """verify parameters allowed or not"""
+    if not paras or not allow_paras:
+        return ""
+    else:
+        not_allow_paras = []
+        allow_para_keys = [allow_para["name"] + "." for allow_para in allow_paras] # noqa
+        para_keys = [k + "." for k in paras]
+        for para_key in para_keys:
+            for allow_para_key in allow_para_keys:
+                # sub string Inclusion relationship
+                if not para_key.startswith(allow_para_key):
+                    not_allow_paras.append(para_key)
+        not_allow_keys = ",".split(not_allow_paras)
+        return not_allow_keys
