@@ -18,6 +18,7 @@ class Config:
     worker_max_tasks_per_child = 200
     result_expires = 24 * 60 * 60
     broker_connection_retry_on_startup = True
+    task_default_queue = 'helmbroker.priority.low'
     worker_cancel_long_running_tasks_on_connection_loss = True
 
 
