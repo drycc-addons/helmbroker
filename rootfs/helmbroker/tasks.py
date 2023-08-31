@@ -2,6 +2,7 @@ import os
 import time
 import shutil
 import yaml
+import base64
 import logging
 
 from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
@@ -10,7 +11,7 @@ from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
 from .celery import app
 from .utils import get_plan_path, get_chart_path, get_cred_value, \
     InstanceLock, dump_instance_meta, dump_binding_meta, load_instance_meta, \
-    get_instance_file, helm
+    get_instance_file, helm, dump_raw_values
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +46,16 @@ def provision(instance_id: str, details: ProvisionDetails):
             "--set",
             f"fullnameOverride=helmbroker-{details.context['instance_name']}"
         ]
-
-        for k, v in details.parameters:
-            args.extend(["--set", f"{k}={v}"])
         logger.info(f"helm install parameters :{details.parameters}")
-        logger.info(f"helm install parameters type:{type(details.parameters)}")
+        if details.parameters and "rawValues" in details.parameters \
+                and details.parameters.get("rawValues", ""):
+            values = str(base64.b64decode(details.parameters["rawValues"]), "utf-8")  # noqa
+            raw_values_file = dump_raw_values(instance_id, values)
+            args.extend(["-f", raw_values_file])
+            details.parameters.pop("rawValues")
+        for k, v in details.parameters.items():
+            args.extend(["--set", f"{k}={v}"])
+        logger.info(f"helm install args:{args}")
         status, output = helm(instance_id, *args)
         data = load_instance_meta(instance_id)
         if status != 0:
@@ -92,15 +98,22 @@ def update(instance_id: str, details: UpdateDetails):
         "--wait",
         "--timeout",
         "25m0s",
+        "--reuse-values",
         "-f",
         values_file,
         "--set",
         f"fullnameOverride=helmbroker-{details.context['instance_name']}"
     ]
-    for k, v in details.parameters:
-        args.extend(["--set", f"{k}={v}"])
     logger.info(f"helm upgrade parameters: {details.parameters}")
-    logger.info(f"helm upgrade parameters type: {type(details.parameters)}")
+    if details.parameters and "rawValues" in details.parameters \
+            and details.parameters.get("rawValues", ""):
+        values = str(base64.b64decode(details.parameters["rawValues"]), "utf-8")  # noqa
+        raw_values_file = dump_raw_values(instance_id, values)
+        args.extend(["-f", raw_values_file])
+        details.parameters.pop("rawValues")
+    for k, v in details.parameters.items():
+        args.extend(["--set", f"{k}={v}"])
+    logger.info(f"helm upgrade args:{args}")
     status, output = helm(instance_id, *args)
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED.value

@@ -4,6 +4,8 @@ import yaml
 import json
 import subprocess
 import time
+import base64
+import copy
 
 from jsonschema import validate
 from .config import INSTANCES_PATH, ADDONS_PATH
@@ -89,6 +91,15 @@ def dump_instance_meta(instance_id, data):
     validate(instance=data, schema=INSTANCE_META_SCHEMA)
     with open(file, "w") as f:
         f.write(json.dumps(data, sort_keys=True, indent=2))
+
+
+def dump_raw_values(instance_id, data):
+    timestamp = time.time()
+    instance_path = get_instance_path(instance_id)
+    file = f"{instance_path}/raw-values-{timestamp}.yaml"
+    with open(file, "w") as f:
+        f.write(data)
+    return file
 
 
 BINDING_META_SCHEMA = {
@@ -217,7 +228,7 @@ def get_addon_bindable(service_id):
     return service.get('bindable', False)
 
 
-def get_addon_allow_parameters(service_id):
+def get_addon_allow_paras(service_id):
     service = get_addon_meta(service_id)
     return service.get('allow_parameters', [])
 
@@ -282,14 +293,39 @@ def verify_parameters(allow_paras, paras):
     """verify parameters allowed or not"""
     if not paras or not allow_paras:
         return ""
-    else:
-        not_allow_paras = []
-        allow_para_keys = [allow_para["name"] + "." for allow_para in allow_paras] # noqa
-        para_keys = [k + "." for k in paras]
-        for para_key in para_keys:
-            for allow_para_key in allow_para_keys:
-                # sub string Inclusion relationship
-                if not para_key.startswith(allow_para_key):
-                    not_allow_paras.append(para_key)
-        not_allow_keys = ",".split(not_allow_paras)
-        return not_allow_keys
+    tmp_paras = copy.deepcopy(paras)
+    # raw_values
+    raw_para_keys = []
+    if "rawValues" in tmp_paras:
+        raw_values = yaml.safe_load(base64.b64decode(tmp_paras["rawValues"]))
+        raw_para_keys = raw_values_format_keys(raw_values)
+        tmp_paras.pop("rawValues")
+
+    para_keys = set(list(tmp_paras.keys()) + raw_para_keys)
+    para_keys = [k + "." for k in para_keys]
+    allow_para_keys = [allow_para["name"] + "." for allow_para in allow_paras]  # noqa
+
+    not_allow_paras = []
+    for para_key in para_keys:
+        for allow_para_key in allow_para_keys:
+            # sub string, inclusion relationship
+            if not para_key.startswith(allow_para_key):
+                not_allow_paras.append(para_key)
+    not_allow_keys = ",".join(not_allow_paras)
+    return not_allow_keys
+
+
+def raw_values_format_keys(raw_values, prefix=''):
+    """
+    {'a': {'b': 1, 'c': {'d': 2, 'e': 3}}, 'f': 4}
+    ->
+    ['a.b', 'a.c.d', 'a.c.e', 'a.f']
+    """
+    keys = []
+    for key, value in raw_values.items():
+        new_prefix = prefix + '.' + key if prefix else key
+        if isinstance(value, dict):
+            keys.extend(raw_values_format_keys(value, new_prefix))
+        else:
+            keys.append(new_prefix)
+    return keys
