@@ -103,14 +103,14 @@ def load_addons(repository):
     save_file(remote_index, ADDONS_PATH, index_name)
     remote_index = yaml.load(remote_index, Loader=yaml.Loader)
     # save index.yaml addons
-    for _, v in remote_index.get('entries', {}).items():
+    for addon_name, v in remote_index.get('entries', {}).items():
         for _ in v:
             url = "/".join(repository["url"].split("/")[0:-1])
-            tgz_name = f'{_["name"]}-{_["version"]}'
+            tgz_name = f'{addon_name}-{_["version"]}'
             addon_tgz_url = f'{url}/{tgz_name}.tgz'
             download_file(addon_tgz_url, ADDONS_PATH)
             extract_tgz(f'{ADDONS_PATH}/{tgz_name}.tgz',
-                        f'{ADDONS_PATH}')
+                        f'{ADDONS_PATH}/{tgz_name}')
     addons_meta_file()
 
 

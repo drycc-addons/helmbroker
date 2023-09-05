@@ -233,6 +233,11 @@ def get_addon_allow_paras(service_id):
     return service.get('allow_parameters', [])
 
 
+def get_addon_archive(service_id):
+    service = get_addon_meta(service_id)
+    return service.get('archive', False)
+
+
 def get_cred_value(ns, source):
     if source.get('serviceRef'):
         return get_service_key_value(ns, source['serviceRef'])
