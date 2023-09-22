@@ -53,8 +53,9 @@ def provision(instance_id: str, details: ProvisionDetails):
             raw_values_file = dump_raw_values(instance_id, values)
             args.extend(["-f", raw_values_file])
             details.parameters.pop("rawValues")
-        for k, v in details.parameters.items():
-            args.extend(["--set", f"{k}={v}"])
+        if details.parameters:
+            for k, v in details.parameters.items():
+                args.extend(["--set", f"{k}={v}"])
         logger.info(f"helm install args:{args}")
         status, output = helm(instance_id, *args)
         data = load_instance_meta(instance_id)
@@ -111,8 +112,9 @@ def update(instance_id: str, details: UpdateDetails):
         raw_values_file = dump_raw_values(instance_id, values)
         args.extend(["-f", raw_values_file])
         details.parameters.pop("rawValues")
-    for k, v in details.parameters.items():
-        args.extend(["--set", f"{k}={v}"])
+    if details.parameters:
+        for k, v in details.parameters.items():
+            args.extend(["--set", f"{k}={v}"])
     logger.info(f"helm upgrade args:{args}")
     status, output = helm(instance_id, *args)
     if status != 0:
