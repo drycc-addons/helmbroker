@@ -2,6 +2,8 @@ import os
 from celery import Celery
 
 
+# The queue and exchange names cannot be the same
+# otherwise an error will occur when enabling the sharding plugin
 class Config:
     # Celery Configuration Options
     timezone = "Asia/Shanghai"
@@ -18,7 +20,9 @@ class Config:
     worker_max_tasks_per_child = 200
     result_expires = 24 * 60 * 60
     broker_connection_retry_on_startup = True
-    task_default_queue = 'helmbroker.priority.low'
+    task_default_queue = 'low'
+    task_default_exchange = 'helmbroker.priority'
+    task_default_routing_key = 'helmbroker.priority.low'
     worker_cancel_long_running_tasks_on_connection_loss = True
 
 
