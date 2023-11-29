@@ -46,7 +46,7 @@ def provision(instance_id: str, details: ProvisionDetails):
             "--set",
             f"fullnameOverride=helmbroker-{details.context['instance_name']}"
         ]
-        logger.info(f"helm install parameters :{details.parameters}")
+        logger.debug(f"helm install parameters :{details.parameters}")
         if details.parameters and "rawValues" in details.parameters \
                 and details.parameters.get("rawValues", ""):
             values = str(base64.b64decode(details.parameters["rawValues"]), "utf-8")  # noqa
@@ -56,7 +56,7 @@ def provision(instance_id: str, details: ProvisionDetails):
         if details.parameters:
             for k, v in details.parameters.items():
                 args.extend(["--set", f"{k}={v}"])
-        logger.info(f"helm install args:{args}")
+        logger.debug(f"helm install args:{args}")
         status, output = helm(instance_id, *args)
         data = load_instance_meta(instance_id)
         if status != 0:

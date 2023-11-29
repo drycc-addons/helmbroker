@@ -46,7 +46,7 @@ app.conf.update(
         ),
     ),
 )
-app.autodiscover_tasks()
+app.autodiscover_tasks(("helmbroker.tasks",))
 
 
 app.config_from_object(Config())
