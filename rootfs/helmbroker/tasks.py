@@ -23,7 +23,7 @@ def provision(instance_id: str, details: ProvisionDetails):
         bind_yaml = f'{chart_path}/templates/bind.yaml'
         if os.path.exists(bind_yaml):
             os.remove(bind_yaml)
-        if os.path.exists(f'{chart_path}/requirements.lock'):
+        if os.path.exists(f'{chart_path}/Chart.yaml'):
             args = [
                 "dependency",
                 "update",
