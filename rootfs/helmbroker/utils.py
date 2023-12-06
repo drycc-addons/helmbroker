@@ -316,6 +316,11 @@ def verify_parameters(allow_paras, paras):
             # sub string, inclusion relationship
             if not para_key.startswith(allow_para_key):
                 not_allow_paras.append(para_key)
+        not_allow_paras = list(set(not_allow_paras))
+        for allow_para_key in allow_para_keys:
+            # sub string, inclusion relationship
+            if para_key.startswith(allow_para_key) and para_key in not_allow_paras: # noqa
+                not_allow_paras.remove(para_key)
     not_allow_keys = ",".join(not_allow_paras)
     return not_allow_keys
 
