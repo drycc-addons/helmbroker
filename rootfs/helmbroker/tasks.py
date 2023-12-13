@@ -2,7 +2,6 @@ import os
 import time
 import shutil
 import yaml
-import base64
 import logging
 
 from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
@@ -11,7 +10,7 @@ from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
 from .celery import app
 from .utils import get_plan_path, get_chart_path, get_cred_value, \
     InstanceLock, dump_instance_meta, dump_binding_meta, load_instance_meta, \
-    get_instance_file, helm, dump_raw_values
+    get_instance_file, helm, format_paras_to_helm_args
 
 logger = logging.getLogger(__name__)
 
@@ -47,15 +46,7 @@ def provision(instance_id: str, details: ProvisionDetails):
             f"fullnameOverride=helmbroker-{details.context['instance_name']}"
         ]
         logger.debug(f"helm install parameters :{details.parameters}")
-        if details.parameters and "rawValues" in details.parameters \
-                and details.parameters.get("rawValues", ""):
-            values = str(base64.b64decode(details.parameters["rawValues"]), "utf-8")  # noqa
-            raw_values_file = dump_raw_values(instance_id, values)
-            args.extend(["-f", raw_values_file])
-            details.parameters.pop("rawValues")
-        if details.parameters:
-            for k, v in details.parameters.items():
-                args.extend(["--set", f"{k}={v}"])
+        args = format_paras_to_helm_args(instance_id, details.parameters, args)
         logger.debug(f"helm install args:{args}")
         status, output = helm(instance_id, *args)
         data = load_instance_meta(instance_id)
@@ -80,12 +71,12 @@ def update(instance_id: str, details: UpdateDetails):
     if details.context:
         data['details']['context'] = details.context
     if details.parameters:
-        data['details']['parameters'] = details.parameters
-    data['last_operation'] = {
-        "state": OperationState.IN_PROGRESS.value,
-        "description": (
-            "update %s in progress at %s" % (instance_id, time.time()))
-    }
+        paras = data['details']['parameters']
+        paras.update(details.parameters)
+        # remove the key which value is null
+        data['details']['parameters'] = {k: v for k, v in paras.items() if v != ""}  # noqa
+    data['last_operation']["state"] = OperationState.IN_PROGRESS.value
+    data['last_operation']["description"] = "update %s in progress at %s" % (instance_id, time.time())
     dump_instance_meta(instance_id, data)
     chart_path = get_chart_path(instance_id)
     values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
@@ -105,16 +96,9 @@ def update(instance_id: str, details: UpdateDetails):
         "--set",
         f"fullnameOverride=helmbroker-{details.context['instance_name']}"
     ]
-    logger.info(f"helm upgrade parameters: {details.parameters}")
-    if details.parameters and "rawValues" in details.parameters \
-            and details.parameters.get("rawValues", ""):
-        values = str(base64.b64decode(details.parameters["rawValues"]), "utf-8")  # noqa
-        raw_values_file = dump_raw_values(instance_id, values)
-        args.extend(["-f", raw_values_file])
-        details.parameters.pop("rawValues")
-    if details.parameters:
-        for k, v in details.parameters.items():
-            args.extend(["--set", f"{k}={v}"])
+    paras = data['details']['parameters']
+    logger.info(f"helm upgrade parameters: {paras}")
+    args = format_paras_to_helm_args(instance_id, paras, args)
     logger.info(f"helm upgrade args:{args}")
     status, output = helm(instance_id, *args)
     if status != 0:
@@ -156,6 +140,11 @@ def bind(instance_id: str,
         "--set",
         f"fullnameOverride=helmbroker-{details.context['instance_name']}"
     ]
+    instance_data = load_instance_meta(instance_id)
+    paras = instance_data["details"]["parameters"]
+    logger.info(f"helm template parameters: {paras}")
+    args = format_paras_to_helm_args(instance_id, paras, args)
+    logger.info(f"helm template args: {args}")
     status, templates = helm(instance_id, *args)  # output: templates.yaml
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED.value

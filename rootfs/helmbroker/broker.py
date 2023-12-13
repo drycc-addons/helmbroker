@@ -68,7 +68,7 @@ class HelmServiceBroker(ServiceBroker):
                 "service_id": details.service_id,
                 "plan_id": details.plan_id,
                 "context": details.context,
-                "parameters": details.parameters,
+                "parameters": details.parameters if details.parameters is not None else {},  # noqa
             },
             "last_operation": {
                 "state": OperationState.IN_PROGRESS.value,
@@ -150,6 +150,7 @@ class HelmServiceBroker(ServiceBroker):
             raise ErrBadRequest(
                 msg="Instance %s does not updateable" % instance_id)
         allow_paras = get_addon_allow_paras(details.service_id)
+        logger.info(f"service instance update parameters: {details.parameters}")
         not_allow_keys = verify_parameters(allow_paras, details.parameters)
         if not_allow_keys:
             raise ErrBadRequest(
@@ -164,8 +165,6 @@ class HelmServiceBroker(ServiceBroker):
                 details.service_id, details.plan_id)
             # add the new plan
             shutil.copytree(addon_plan_path, plan_path)
-        logger.info(f"service update parameters: {details.parameters}")
-        logger.info(f"service update parameters type: {type(details.parameters)}")  # noqa
         update.delay(instance_id, details)
         return UpdateServiceSpec(is_async=True)
 

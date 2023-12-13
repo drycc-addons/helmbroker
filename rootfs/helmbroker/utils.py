@@ -80,7 +80,7 @@ INSTANCE_META_SCHEMA = {
 def load_instance_meta(instance_id):
     file = get_instance_file(instance_id)
     with open(file) as f:
-        data = json.load(f)
+        data = json.loads(f.read())
         validate(instance=data, schema=INSTANCE_META_SCHEMA)
         return data
 
@@ -268,7 +268,6 @@ def get_secret_key_value(ns, secret_ref):
     ]
     status, output = command("kubectl", *args)
     if status == 0:
-        import base64
         output = base64.b64decode(output).decode()
     return status, output
 
@@ -339,3 +338,20 @@ def raw_values_format_keys(raw_values, prefix=''):
         else:
             keys.append(new_prefix)
     return keys
+
+
+def format_paras_to_helm_args(instance_id, parameters, args):
+    """
+
+    """
+    params = copy.deepcopy(parameters)
+    if params and "rawValues" in params \
+            and params.get("rawValues", ""):
+        values = str(base64.b64decode(params["rawValues"]), "utf-8")  # noqa
+        raw_values_file = dump_raw_values(instance_id, values)
+        args.extend(["-f", raw_values_file])
+        params.pop("rawValues")
+    if params:
+        for k, v in params.items():
+            args.extend(["--set", f"{k}={v}"])
+    return args
