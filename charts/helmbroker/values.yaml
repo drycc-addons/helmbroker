@@ -58,6 +58,9 @@ celery:
     extraMatchLabels:
       app: "drycc-helmbroker-celery"
 
+# Default override of addon values
+addonValues: {}
+
 persistence:
   enabled: true
   accessMode: ReadWriteMany

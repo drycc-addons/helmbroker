@@ -13,4 +13,6 @@ data:
     - name: {{ .name }}
       url: {{ .url }}
     {{- end }}
+  addon-values: |
+    {{- (tpl .Values.addonValues $)  | nindent 4 }}
 {{- end }}

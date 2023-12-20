@@ -10,7 +10,7 @@ from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
 from .celery import app
 from .utils import get_plan_path, get_chart_path, get_cred_value, \
     InstanceLock, dump_instance_meta, dump_binding_meta, load_instance_meta, \
-    get_instance_file, helm, format_paras_to_helm_args
+    get_instance_file, helm, dump_addon_values, format_paras_to_helm_args
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,7 @@ def provision(instance_id: str, details: ProvisionDetails):
             ]
             helm(instance_id, *args)
         values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
+        addon_values_file = dump_addon_values(details.service_id, instance_id)
         args = [
             "install",
             details.context["instance_name"],
@@ -40,6 +41,8 @@ def provision(instance_id: str, details: ProvisionDetails):
             "--wait",
             "--timeout",
             "25m0s",
+            "-f",
+            addon_values_file,
             "-f",
             values_file,
             "--set",
@@ -80,6 +83,7 @@ def update(instance_id: str, details: UpdateDetails):
     dump_instance_meta(instance_id, data)
     chart_path = get_chart_path(instance_id)
     values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
+    addon_values_file = dump_addon_values(details.service_id, instance_id)
     args = [
         "upgrade",
         details.context["instance_name"],
@@ -91,6 +95,8 @@ def update(instance_id: str, details: UpdateDetails):
         "--timeout",
         "25m0s",
         "--reuse-values",
+        "-f",
+        addon_values_file,
         "-f",
         values_file,
         "--set",

@@ -8,7 +8,7 @@ import base64
 import copy
 
 from jsonschema import validate
-from .config import INSTANCES_PATH, ADDONS_PATH
+from .config import INSTANCES_PATH, ADDONS_PATH, CONFIG_PATH
 
 
 REGISTRY_CONFIG_SUFFIX = '.config/helm/registry.json'
@@ -43,7 +43,7 @@ def helm(instance_id, *args, output_type="text"):
         "--repository-config",
         os.path.join(instance_path, REPOSITORY_CONFIG_SUFFIX),
     ])
-    return command("helm", *args, output_type=output_type)
+    return command("helm", *new_args, output_type=output_type)
 
 
 INSTANCE_META_SCHEMA = {
@@ -99,6 +99,17 @@ def dump_raw_values(instance_id, data):
     file = f"{instance_path}/raw-values-{timestamp}.yaml"
     with open(file, "w") as f:
         f.write(data)
+    return file
+
+
+def dump_addon_values(service_id, instance_id):
+    timestamp = time.time()
+    instance_path = get_instance_path(instance_id)
+    file = f"{instance_path}/addon-values-{timestamp}.yaml"
+    with open(file, "w") as f:
+        with open(f'{CONFIG_PATH}/addon-values', 'r') as f:
+            addon_values = yaml.load(f.read(), Loader=yaml.Loader)
+            f.write(yaml.dump(addon_values.get(service_id, {})))
     return file
 
 
