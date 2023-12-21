@@ -103,9 +103,9 @@ def update(instance_id: str, details: UpdateDetails):
         f"fullnameOverride=helmbroker-{details.context['instance_name']}"
     ]
     paras = data['details']['parameters']
-    logger.info(f"helm upgrade parameters: {paras}")
+    logger.debug(f"helm upgrade parameters: {paras}")
     args = format_paras_to_helm_args(instance_id, paras, args)
-    logger.info(f"helm upgrade args:{args}")
+    logger.debug(f"helm upgrade args:{args}")
     status, output = helm(instance_id, *args)
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED.value
@@ -148,9 +148,9 @@ def bind(instance_id: str,
     ]
     instance_data = load_instance_meta(instance_id)
     paras = instance_data["details"]["parameters"]
-    logger.info(f"helm template parameters: {paras}")
+    logger.debug(f"helm template parameters: {paras}")
     args = format_paras_to_helm_args(instance_id, paras, args)
-    logger.info(f"helm template args: {args}")
+    logger.debug(f"helm template args: {args}")
     status, templates = helm(instance_id, *args)  # output: templates.yaml
     if status != 0:
         data["last_operation"]["state"] = OperationState.FAILED.value
@@ -199,13 +199,14 @@ def deprovision(instance_id: str):
         data["last_operation"]["description"] = (
             "deprovision %s in progress at %s" % (instance_id, time.time()))
         dump_instance_meta(instance_id, data)
-        status, output = helm(
-            instance_id,
+        args = [
             "uninstall",
             data["details"]["context"]["instance_name"],
             "--namespace",
             data["details"]["context"]["namespace"],
-        )
+        ]
+        logger.debug(f"helm uninstall args: {args}")
+        status, output = helm(instance_id, *args)
         if status != 0:
             data["last_operation"]["state"] = OperationState.FAILED.value
             data["last_operation"]["description"] = (
