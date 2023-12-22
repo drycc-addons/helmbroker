@@ -106,10 +106,13 @@ def dump_addon_values(service_id, instance_id):
     timestamp = time.time()
     instance_path = get_instance_path(instance_id)
     file = f"{instance_path}/addon-values-{timestamp}.yaml"
+    service = get_addon_meta(service_id)
     with open(file, "w") as f:
         with open(f'{CONFIG_PATH}/addon-values', 'r') as f:
             addon_values = yaml.load(f.read(), Loader=yaml.Loader)
-            f.write(yaml.dump(addon_values.get(service_id, {})))
+            f.write(yaml.dump(
+                addon_values.get(service["name"], {}).get(service["version"], {})
+            ))
     return file
 
 
@@ -217,10 +220,11 @@ def get_addon_meta(service_id):
 def get_addon_path(service_id, plan_id):
     service = get_addon_meta(service_id)
     plan = [plan for plan in service['plans'] if plan['id'] == plan_id][0]
-    service_name = f'{service["name"]}-{service["version"]}'
     plan_name = plan['name']
-    service_path = f'{ADDONS_PATH}/{service_name}/chart/{service["name"]}'
-    plan_path = f'{ADDONS_PATH}/{service_name}/plans/{plan_name}'
+    service_name_path = f'{service["name"]}-{service["version"]}'
+    base_path = f"{ADDONS_PATH}/{service_name_path}"
+    service_path = f'{base_path}/chart/{service["name"]}'
+    plan_path = f'{base_path}/plans/{plan_name}'
     return service_path, plan_path
 
 
