@@ -150,7 +150,7 @@ class HelmServiceBroker(ServiceBroker):
             raise ErrBadRequest(
                 msg="Instance %s does not updateable" % instance_id)
         allow_paras = get_addon_allow_paras(details.service_id)
-        logger.debug(f"service instance update parameters: {details.parameters}")
+        logger.debug(f"service instance update parameters: {details.parameters}")  # noqa
         not_allow_keys = verify_parameters(allow_paras, details.parameters)
         if not_allow_keys:
             raise ErrBadRequest(

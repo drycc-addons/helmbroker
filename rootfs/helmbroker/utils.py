@@ -111,7 +111,7 @@ def dump_addon_values(service_id, instance_id):
         with open(f'{CONFIG_PATH}/addon-values', 'r') as f:
             addon_values = yaml.load(f.read(), Loader=yaml.Loader)
             f.write(yaml.dump(
-                addon_values.get(service["name"], {}).get(service["version"], {})
+                addon_values.get(service["name"], {}).get(service["version"], {})  # noqa
             ))
     return file
 

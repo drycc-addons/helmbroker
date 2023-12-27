@@ -79,7 +79,7 @@ def update(instance_id: str, details: UpdateDetails):
         # remove the key which value is null
         data['details']['parameters'] = {k: v for k, v in paras.items() if v != ""}  # noqa
     data['last_operation']["state"] = OperationState.IN_PROGRESS.value
-    data['last_operation']["description"] = "update %s in progress at %s" % (instance_id, time.time())
+    data['last_operation']["description"] = "update %s in progress at %s" % (instance_id, time.time())  # noqa
     dump_instance_meta(instance_id, data)
     chart_path = get_chart_path(instance_id)
     values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
