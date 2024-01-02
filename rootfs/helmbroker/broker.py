@@ -51,10 +51,14 @@ class HelmServiceBroker(ServiceBroker):
             raise ErrBadRequest(
                 msg="This addon has archived.")
         allow_paras = get_addon_allow_paras(details.service_id)
-        not_allow_keys = verify_parameters(allow_paras, details.parameters)
+        not_allow_keys, required_keys = verify_parameters(
+            allow_paras, details.parameters)
         if not_allow_keys:
             raise ErrBadRequest(
-                msg="Instance parameters %s does not allowed" % not_allow_keys)
+                msg="parameters %s does not allowed" % not_allow_keys)
+        if required_keys:
+            raise ErrBadRequest(
+                msg="required parameters %s not exists" % required_keys)
         os.makedirs(instance_path, exist_ok=True)
         chart_path, plan_path = (
             get_chart_path(instance_id), get_plan_path(instance_id))
@@ -68,7 +72,7 @@ class HelmServiceBroker(ServiceBroker):
                 "service_id": details.service_id,
                 "plan_id": details.plan_id,
                 "context": details.context,
-                "parameters": details.parameters if details.parameters is not None else {},  # noqa
+                "parameters": details.parameters if details.parameters else {},
             },
             "last_operation": {
                 "state": OperationState.IN_PROGRESS.value,
@@ -150,11 +154,16 @@ class HelmServiceBroker(ServiceBroker):
             raise ErrBadRequest(
                 msg="Instance %s does not updateable" % instance_id)
         allow_paras = get_addon_allow_paras(details.service_id)
-        logger.debug(f"service instance update parameters: {details.parameters}")  # noqa
-        not_allow_keys = verify_parameters(allow_paras, details.parameters)
+        logger.debug(
+            f"service instance update parameters: {details.parameters}")
+        not_allow_keys, required_keys = verify_parameters(
+            allow_paras, details.parameters)
         if not_allow_keys:
             raise ErrBadRequest(
-                msg="Instance parameters %s does not allowed" % not_allow_keys)
+                msg="parameters %s does not allowed" % not_allow_keys)
+        if required_keys:
+            raise ErrBadRequest(
+                msg="required parameters %s not exists" % required_keys)
         if not async_allowed:
             raise ErrAsyncRequired()
         if details.plan_id is not None:

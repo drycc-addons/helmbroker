@@ -51,7 +51,7 @@ test-style: podman-build-test
 	${SHELLCHECK_PREFIX} $(SHELL_SCRIPTS)
 
 test-unit: podman-build-test
-	@echo "Implement in the future"
+	podman run --rm -v ${CURDIR}:/tmp/test -w /tmp/test/rootfs ${IMAGE}.test /tmp/test/rootfs/bin/test-unit
 
 test-functional:
 	@echo "Implement functional tests in _tests directory"
