@@ -30,7 +30,6 @@ def provision(instance_id: str, details: ProvisionDetails):
             ]
             helm(instance_id, *args)
         values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
-        addon_values_file = dump_addon_values(details.service_id, instance_id)
         args = [
             "install",
             details.context["instance_name"],
@@ -42,12 +41,14 @@ def provision(instance_id: str, details: ProvisionDetails):
             "--timeout",
             "25m0s",
             "-f",
-            addon_values_file,
-            "-f",
             values_file,
             "--set",
             f"fullnameOverride=helmbroker-{details.context['instance_name']}"
         ]
+        addon_values_file = dump_addon_values(details.service_id, instance_id)
+        if addon_values_file:
+            args.insert(9, "-f")
+            args.insert(10, addon_values_file)
         logger.debug(f"helm install parameters :{details.parameters}")
         args = format_paras_to_helm_args(instance_id, details.parameters, args)
         logger.debug(f"helm install args:{args}")
@@ -83,7 +84,6 @@ def update(instance_id: str, details: UpdateDetails):
     dump_instance_meta(instance_id, data)
     chart_path = get_chart_path(instance_id)
     values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
-    addon_values_file = dump_addon_values(details.service_id, instance_id)
     args = [
         "upgrade",
         details.context["instance_name"],
@@ -96,12 +96,14 @@ def update(instance_id: str, details: UpdateDetails):
         "25m0s",
         "--reuse-values",
         "-f",
-        addon_values_file,
-        "-f",
         values_file,
         "--set",
         f"fullnameOverride=helmbroker-{details.context['instance_name']}"
     ]
+    addon_values_file = dump_addon_values(details.service_id, instance_id)
+    if addon_values_file:
+        args.insert(10, "-f")
+        args.insert(11, addon_values_file)
     paras = data['details']['parameters']
     logger.debug(f"helm upgrade parameters: {paras}")
     args = format_paras_to_helm_args(instance_id, paras, args)

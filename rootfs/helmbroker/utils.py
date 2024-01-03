@@ -6,10 +6,12 @@ import subprocess
 import time
 import base64
 import copy
+import logging
 
 from jsonschema import validate
 from .config import INSTANCES_PATH, ADDONS_PATH, CONFIG_PATH
 
+logger = logging.getLogger(__name__)
 
 REGISTRY_CONFIG_SUFFIX = '.config/helm/registry.json'
 REPOSITORY_CACHE_SUFFIX = '.cache/helm/repository'
@@ -162,12 +164,19 @@ def dump_addon_values(service_id, instance_id):
     instance_path = get_instance_path(instance_id)
     file = f"{instance_path}/addon-values-{timestamp}.yaml"
     service = _get_addon_meta(service_id)
-    with open(file, "w") as f:
+    logger.debug(f"dump_addon_values service: {service}")
+    if not os.path.exists(f'{CONFIG_PATH}/addon-values'):
+        return None
+    with open(file, "w") as fw:
         with open(f'{CONFIG_PATH}/addon-values', 'r') as f:
-            addon_values = yaml.load(f.read(), Loader=yaml.Loader)
-            f.write(yaml.dump(
-                addon_values.get(service["name"], {}).get(service["version"], {})  # noqa
-            ))
+            addons_values = yaml.load(f.read(), Loader=yaml.Loader)
+            logger.debug(f"dump_addon_values addons_values: {addons_values}")
+            addon_values = addons_values.get(service["name"], {}).\
+                get(service["version"], {})
+            logger.debug(f"dump_addon_values addon_values: {addon_values}")
+            if not addon_values:
+                return None
+            fw.write(yaml.dump(addon_values))
     return file
 
 
