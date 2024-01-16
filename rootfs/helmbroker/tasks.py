@@ -18,6 +18,24 @@ logger = logging.getLogger(__name__)
 @app.task(serializer='pickle')
 def provision(instance_id: str, details: ProvisionDetails):
     with InstanceLock(instance_id):
+        # create instance.json
+        dump_instance_meta(instance_id, {
+            "id": instance_id,
+            "details": {
+                "service_id": details.service_id,
+                "plan_id": details.plan_id,
+                "context": details.context,
+                "parameters": details.parameters if details.parameters else {},
+            },
+            "last_operation": {
+                "state": OperationState.IN_PROGRESS.value,
+                "operation": "provision",
+                "description": (
+                    "provision %s in progress at %s" % (
+                        instance_id, time.time()))
+            }
+        })
+
         chart_path = get_chart_path(instance_id)
         bind_yaml = f'{chart_path}/templates/bind.yaml'
         if os.path.exists(bind_yaml):

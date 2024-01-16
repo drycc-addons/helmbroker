@@ -66,24 +66,6 @@ class HelmServiceBroker(ServiceBroker):
             get_addon_path(details.service_id, details.plan_id))
         shutil.copytree(addon_chart_path, chart_path)
         shutil.copytree(addon_plan_path, plan_path)
-        data = {
-            "id": instance_id,
-            "details": {
-                "service_id": details.service_id,
-                "plan_id": details.plan_id,
-                "context": details.context,
-                "parameters": details.parameters if details.parameters else {},
-            },
-            "last_operation": {
-                "state": OperationState.IN_PROGRESS.value,
-                "operation": "provision",
-                "description": (
-                    "provision %s in progress at %s" % (
-                        instance_id, time.time()))
-            }
-        }
-        with InstanceLock(instance_id):
-            dump_instance_meta(instance_id, data)
         provision.delay(instance_id, details)
         return ProvisionedServiceSpec(state=ProvisionState.IS_ASYNC)
 

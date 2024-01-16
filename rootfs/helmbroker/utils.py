@@ -287,7 +287,7 @@ def verify_parameters(allow_parameters, parameters):
         return set(list(parameters.keys()) + raw_para_keys)
 
     if not parameters or not allow_parameters:
-        return ""
+        return "", ""
     parameters = merge_parameters(copy.deepcopy(parameters))
     return (
         ",".join(_verify_allow_parameters(allow_parameters, parameters)),
