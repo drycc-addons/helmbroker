@@ -1,5 +1,4 @@
 import os
-import time
 import shutil
 import logging
 from typing import Union, List, Optional
@@ -16,9 +15,8 @@ from openbrokerapi.service_broker import ServiceBroker, Service, \
 
 from .utils import get_instance_path, get_chart_path, get_plan_path, \
     get_addon_path, get_addon_updateable, get_addon_bindable, InstanceLock, \
-    load_instance_meta, load_binding_meta, dump_instance_meta, \
-    load_addons_meta, get_addon_allow_paras, verify_parameters, \
-    get_addon_archive
+    load_instance_meta, load_binding_meta, load_addons_meta, \
+    get_addon_allow_paras, verify_parameters, get_addon_archive
 from .tasks import provision, bind, deprovision, update
 
 logger = logging.getLogger(__name__)
