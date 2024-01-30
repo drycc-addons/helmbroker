@@ -13,6 +13,8 @@ data:
     - name: {{ .name }}
       url: {{ .url }}
     {{- end }}
+  {{- if .Values.addonValues }}
   addon-values: |
     {{- (tpl .Values.addonValues $)  | nindent 4 }}
+  {{- end }}
 {{- end }}
