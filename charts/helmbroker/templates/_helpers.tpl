@@ -30,17 +30,16 @@ env:
 {{- end }}
 {{- end }}
 
-
 {{/* Generate helmbroker deployment limits */}}
 {{- define "helmbroker.limits" -}}
-{{- if or (.Values.limits_cpu) (.Values.limits_memory) }}
+{{- if or (.Values.limitsCpu) (.Values.limitsMemory) }}
 resources:
   limits:
-{{- if (.Values.limits_cpu) }}
-    cpu: {{.Values.limits_cpu}}
+{{- if (.Values.limitsCpu) }}
+    cpu: {{.Values.limitsCpu}}
 {{- end }}
-{{- if (.Values.limits_memory) }}
-    memory: {{.Values.limits_memory}}
+{{- if (.Values.limitsMemory) }}
+    memory: {{.Values.limitsMemory}}
 {{- end }}
 {{- end }}
 {{- end }}

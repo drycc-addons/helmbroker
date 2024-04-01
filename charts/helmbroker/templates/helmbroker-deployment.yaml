@@ -46,26 +46,32 @@ spec:
           - $(DRYCC_RABBITMQ_URL)
         {{- include "helmbroker.envs" . | indent 10 }}
       containers:
-        - name: drycc-helmbroker
-          image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
-          imagePullPolicy: {{.Values.imagePullPolicy}}
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 8000
-            initialDelaySeconds: 30
-            timeoutSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /readiness
-              port: 8000
-            initialDelaySeconds: 30
-            timeoutSeconds: 10
-            periodSeconds: 5
-          ports:
-            - containerPort: 8000
-              name: http
-          {{- include "helmbroker.limits" . | indent 10 }}
-          {{- include "helmbroker.envs" . | indent 10 }}
-          {{- include "helmbroker.volumeMounts" . | indent 10 }}
+      - name: drycc-helmbroker
+        image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
+        imagePullPolicy: {{.Values.imagePullPolicy}}
+        {{- if .Values.diagnosticMode.enabled }}
+        command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 8 }}
+        args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 8 }}
+        {{- end }}
+        {{- if not .Values.diagnosticMode.enabled }}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          initialDelaySeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: 8000
+          initialDelaySeconds: 30
+          timeoutSeconds: 10
+          periodSeconds: 5
+        {{- end }}
+        ports:
+          - containerPort: 8000
+            name: http
+        {{- include "helmbroker.limits" . | indent 8 }}
+        {{- include "helmbroker.envs" . | indent 8 }}
+        {{- include "helmbroker.volumeMounts" . | indent 8 }}
       {{- include "helmbroker.volumes" . | indent 6 }}

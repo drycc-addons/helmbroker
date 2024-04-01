@@ -37,14 +37,19 @@ spec:
           - $(DRYCC_HELMBROKER_SERVICE_HOST):$(DRYCC_HELMBROKER_SERVICE_PORT)
         {{- include "helmbroker.envs" . | indent 10 }}
       containers:
-        - name: drycc-helmbroker-celery
-          image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
-          imagePullPolicy: {{.Values.imagePullPolicy}}
-          args:
-          - /bin/bash
-          - -c
-          - celery -A helmbroker worker --autoscale=32,1 --loglevel=info
-          {{- include "helmbroker.limits" . | indent 10 }}
-          {{- include "helmbroker.envs" . | indent 10 }}
-          {{- include "helmbroker.volumeMounts" . | indent 10 }}
+      - name: drycc-helmbroker-celery
+        image: {{$.Values.imageRegistry}}/{{$.Values.imageOrg}}/helmbroker:{{$.Values.imageTag}}
+        imagePullPolicy: {{$.Values.imagePullPolicy}}
+        {{- if $.Values.diagnosticMode.enabled }}
+        command: {{- include "common.tplvalues.render" (dict "value" $.Values.diagnosticMode.command "context" $) | nindent 8 }}
+        args: {{- include "common.tplvalues.render" (dict "value" $.Values.diagnosticMode.args "context" $) | nindent 8 }}
+        {{- else }}
+        args:
+        - /bin/bash
+        - -c
+        - celery --app helmbroker worker --queues helmbroker.low,helmbroker.middle,helmbroker.high --autoscale=32,1 --loglevel=WARNING
+        {{- end }}
+        {{- include "helmbroker.limits" $ | indent 8 }}
+        {{- include "helmbroker.envs" $ | indent 8 }}
+        {{- include "helmbroker.volumeMounts" $ | indent 8 }}
       {{- include "helmbroker.volumes" . | indent 6 }}

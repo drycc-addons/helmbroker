@@ -6,6 +6,21 @@ replicas: 1
 # limitsCpu: "100m"
 # limitsMemory: "50Mi"
 
+## Enable diagnostic mode
+##
+diagnosticMode:
+  ## @param diagnosticMode.enabled Enable diagnostic mode (all probes will be disabled and the command will be overridden)
+  ##
+  enabled: false
+  ## @param diagnosticMode.command Command to override all containers
+  ##
+  command:
+    - sleep
+  ## @param diagnosticMode.args Args to override all containers
+  ##
+  args:
+    - infinity
+
 ## config the helm-broker repositories
 repositories:
 - name: drycc-helm-broker

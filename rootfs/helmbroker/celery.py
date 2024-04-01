@@ -20,7 +20,7 @@ class Config(object):
     result_expires = 24 * 60 * 60
     broker_url = os.environ.get("DRYCC_RABBITMQ_URL", 'amqp://guest:guest@127.0.0.1:5672/')  # noqa
     broker_connection_retry_on_startup = True
-    task_default_queue = 'low'
+    task_default_queue = 'helmbroker.low'
     task_default_exchange = 'helmbroker.priority'
     task_default_routing_key = 'helmbroker.priority.low'
     broker_connection_retry_on_startup = True
@@ -31,18 +31,45 @@ app = Celery('helmbroker')
 app.config_from_object(Config())
 app.conf.update(
     task_routes={
-        'helmbroker.tasks': {
-            'queue': 'low',
+        'helmbroker.tasks.provision': {
+            'queue': 'helmbroker.high',
             'exchange': 'helmbroker.priority',
             'routing_key': 'helmbroker.priority.high',
+        },
+        'helmbroker.tasks.update': {
+            'queue': 'helmbroker.high',
+            'exchange': 'helmbroker.priority',
+            'routing_key': 'helmbroker.priority.high',
+        },
+        'helmbroker.tasks.bind': {
+            'queue': 'helmbroker.high',
+            'exchange': 'helmbroker.priority',
+            'routing_key': 'helmbroker.priority.high',
+        },
+        'helmbroker.tasks.deprovision': {
+            'queue': 'helmbroker.middle',
+            'exchange': 'helmbroker.priority',
+            'routing_key': 'helmbroker.priority.middle',
         },
     },
     task_queues=(
         Queue(
-            'low',
+            'helmbroker.low',
             exchange=Exchange('helmbroker.priority', type="direct"),
             routing_key='helmbroker.priority.low',
             queue_arguments={'x-max-priority': 16},
+        ),
+        Queue(
+            'helmbroker.high',
+            exchange=Exchange('helmbroker.priority', type="direct"),
+            routing_key='helmbroker.priority.high',
+            queue_arguments={'x-max-priority': 64},
+        ),
+        Queue(
+            'helmbroker.middle',
+            exchange=Exchange('helmbroker.priority', type="direct"),
+            routing_key='helmbroker.priority.middle',
+            queue_arguments={'x-max-priority': 32},
         ),
     ),
 )
