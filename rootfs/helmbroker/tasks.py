@@ -164,7 +164,9 @@ def bind(instance_id: str,
         "-f",
         values_file,
         "--set",
-        f"fullnameOverride=helmbroker-{details.context['instance_name']}"
+        f"fullnameOverride=helmbroker-{details.context['instance_name']}",
+        "--namespace",
+        details.context["namespace"],
     ]
     instance_data = load_instance_meta(instance_id)
     paras = instance_data["details"]["parameters"]
