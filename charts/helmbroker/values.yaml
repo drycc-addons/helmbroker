@@ -33,6 +33,9 @@ celeryReplicas: 1
 username: admin
 password: admin
 
+# Configuring this will no longer use the built-in redis component
+redisUrl: ""
+
 # Configuring this will no longer use the built-in rabbitmq component
 rabbitmqUrl: ""
 
@@ -40,8 +43,8 @@ rabbitmqUrl: ""
 # can be specified as key-value pairs under environment
 # this is usually a non required setting.
 environment:
-  # DRYCC_DEBUG: true
-  # HELMBROKER_ROOT: /etc/helmbroker
+  # HELMBROKER_DEBUG: true
+  # HELMBROKER_CONFIG_ROOT: /etc/helmbroker
 
 api:
   nodeAffinityPreset:
@@ -73,6 +76,10 @@ celery:
     extraMatchLabels:
       app: "drycc-helmbroker-celery"
 
+# drycc redis replicas must always be set to 1
+redis:
+  replicas: 1
+
 # Default override of addon values
 addonValues: {}
 
@@ -84,6 +91,11 @@ persistence:
   volumeName: ""
 
 global:
+  # Set the location of Workflow's redis instance
+  # Valid values are:
+  # - on-cluster: Run Redis within the Kubernetes cluster
+  # - off-cluster: Run Redis outside the Kubernetes cluster (configure in controller section)
+  redisLocation: "on-cluster"
   # Set the location of Workflow's rabbitmq instance
   # Valid values are:
   # - on-cluster: Run Rabbitmq within the Kubernetes cluster

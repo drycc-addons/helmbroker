@@ -3,4 +3,5 @@ gunicorn==22.0.0
 openbrokerapi==4.6.0
 requests==2.31.0
 celery==5.4.0
+redis==5.0.8
 jsonschema==4.21.1

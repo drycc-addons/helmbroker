@@ -15,7 +15,7 @@ COPY . ${DRYCC_HOME_DIR}
 WORKDIR ${DRYCC_HOME_DIR}
 
 RUN buildDeps='musl-dev' \
-  && install-packages ${buildDeps} openssl ca-certificates \
+  && install-packages ${buildDeps} patch openssl ca-certificates \
   && install-stack python ${PYTHON_VERSION} \
   && install-stack helm ${HELM_VERSION} \
   && install-stack kubectl ${KUBECTL_VERSION} && . init-stack \

@@ -3,26 +3,43 @@
 env:
 - name: "TZ"
   value: {{ .Values.time_zone | default "UTC" | quote }}
-- name: USERNAME
+- name: HELMBROKER_USERNAME
   value: {{ if .Values.username | default "" | ne "" }}{{ .Values.username }}{{ else }}{{ randAlphaNum 32 }}{{ end }}
-- name: PASSWORD
+- name: HELMBROKER_PASSWORD
   value: {{ if .Values.password | default "" | ne "" }}{{ .Values.password }}{{ else }}{{ randAlphaNum 32 }}{{ end }}
 {{- if (.Values.rabbitmqUrl) }}
-- name: DRYCC_RABBITMQ_URL
+- name: HELMBROKER_RABBITMQ_URL
   value: {{ .Values.rabbitmqUrl }}
 {{- else if eq .Values.global.rabbitmqLocation "on-cluster" }}
-- name: "DRYCC_RABBITMQ_USERNAME"
+- name: "HELMBROKER_RABBITMQ_USERNAME"
   valueFrom:
     secretKeyRef:
       name: rabbitmq-creds
       key: username
-- name: "DRYCC_RABBITMQ_PASSWORD"
+- name: "HELMBROKER_RABBITMQ_PASSWORD"
   valueFrom:
     secretKeyRef:
       name: rabbitmq-creds
       key: password
-- name: "DRYCC_RABBITMQ_URL"
-  value: "amqp://$(DRYCC_RABBITMQ_USERNAME):$(DRYCC_RABBITMQ_PASSWORD)@drycc-rabbitmq.{{$.Release.Namespace}}.svc.{{$.Values.global.clusterDomain}}:5672/drycc"
+- name: "HELMBROKER_RABBITMQ_URL"
+  value: "amqp://$(HELMBROKER_RABBITMQ_USERNAME):$(HELMBROKER_RABBITMQ_PASSWORD)@drycc-rabbitmq.{{$.Release.Namespace}}.svc.{{$.Values.global.clusterDomain}}:5672/drycc"
+{{- end }}
+{{- if (.Values.redisUrl) }}
+- name: HELMBROKER_REDIS_URL
+  value: {{ .Values.redisUrl }}
+{{- else if eq .Values.global.redisLocation "on-cluster" }}
+- name: "HELMBROKER_REDIS_ADDRS"
+  valueFrom:
+    secretKeyRef:
+      name: redis-creds
+      key: addrs
+- name: "HELMBROKER_REDIS_PASSWORD"
+  valueFrom:
+    secretKeyRef:
+      name: redis-creds
+      key: password
+- name: "HELMBROKER_REDIS_URL"
+  value: "redis://:$(HELMBROKER_REDIS_PASSWORD)@$(HELMBROKER_REDIS_ADDRS)/0"
 {{- end }}
 {{- range $key, $value := .Values.environment }}
 - name: {{ $key }}

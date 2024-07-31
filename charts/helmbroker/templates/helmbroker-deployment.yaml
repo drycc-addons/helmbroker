@@ -27,15 +27,6 @@ spec:
         nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.api.nodeAffinityPreset.type "key" .Values.api.nodeAffinityPreset.key "values" .Values.api.nodeAffinityPreset.values ) | nindent 10 }}
       serviceAccount: drycc-helmbroker
       initContainers:
-        - name: loader
-          image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
-          imagePullPolicy: {{.Values.imagePullPolicy}}
-          args:
-          - /bin/bash
-          - -c
-          - python -m helmbroker.loader
-          {{- include "helmbroker.envs" . | indent 10 }}
-          {{- include "helmbroker.volumeMounts" . | indent 10 }}
         - name: drycc-helmbroker-init
           image: registry.drycc.cc/drycc/python-dev:latest
           imagePullPolicy: {{.Values.imagePullPolicy}}
@@ -43,8 +34,17 @@ spec:
           - netcat
           - -v
           - -u
-          - $(DRYCC_RABBITMQ_URL)
+          - $(HELMBROKER_REDIS_URL),$(HELMBROKER_RABBITMQ_URL)
         {{- include "helmbroker.envs" . | indent 10 }}
+        - name: drycc-helmbroker-fetch
+          image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
+          imagePullPolicy: {{.Values.imagePullPolicy}}
+          args:
+          - /bin/bash
+          - -c
+          - python -m helmbroker.database.fetch
+          {{- include "helmbroker.envs" . | indent 10 }}
+          {{- include "helmbroker.volumeMounts" . | indent 10 }}
       containers:
       - name: drycc-helmbroker
         image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}

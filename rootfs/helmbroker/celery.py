@@ -18,7 +18,7 @@ class Config(object):
     task_time_limit = 30 * 60
     worker_max_tasks_per_child = 200
     result_expires = 24 * 60 * 60
-    broker_url = os.environ.get("DRYCC_RABBITMQ_URL", 'amqp://guest:guest@127.0.0.1:5672/')  # noqa
+    broker_url = os.environ.get("HELMBROKER_RABBITMQ_URL", 'amqp://guest:guest@127.0.0.1:5672/')
     broker_connection_retry_on_startup = True
     task_default_queue = 'helmbroker.low'
     task_default_exchange = 'helmbroker.priority'

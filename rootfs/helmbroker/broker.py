@@ -6,17 +6,19 @@ from typing import Union, List, Optional
 from openbrokerapi.catalog import ServicePlan
 from openbrokerapi.errors import ErrInstanceAlreadyExists, ErrAsyncRequired, \
     ErrBindingAlreadyExists, ErrBadRequest, ErrInstanceDoesNotExist, \
-    ServiceException
+    ServiceException, ErrBindingDoesNotExist
 from openbrokerapi.service_broker import ServiceBroker, Service, \
     ProvisionDetails, ProvisionedServiceSpec, ProvisionState, GetBindingSpec, \
     BindDetails, Binding, BindState, UnbindDetails, UnbindSpec, \
     UpdateDetails, UpdateServiceSpec, DeprovisionDetails, \
     DeprovisionServiceSpec, LastOperation, OperationState
 
-from .utils import get_instance_path, get_chart_path, get_plan_path, \
-    get_addon_path, get_addon_updateable, get_addon_bindable, InstanceLock, \
-    load_instance_meta, load_binding_meta, load_addons_meta, \
-    get_addon_allow_paras, verify_parameters, get_addon_archive
+from .utils import verify_parameters, new_instance_lock
+from .database.fetch import fetch_chart_plan
+from .database.query import get_instance_path, get_chart_path, get_plan_path, \
+    get_addon_updateable, get_addon_bindable, get_addon_allow_params, \
+    get_addon_archive, get_binding_file, get_instance_file
+from .database.metadata import load_instance_meta, load_binding_meta, load_addons_meta
 from .tasks import provision, bind, deprovision, update
 
 logger = logging.getLogger(__name__)
@@ -48,9 +50,9 @@ class HelmServiceBroker(ServiceBroker):
         if get_addon_archive(details.service_id):
             raise ErrBadRequest(
                 msg="This addon has archived.")
-        allow_paras = get_addon_allow_paras(details.service_id)
+        allow_params = get_addon_allow_params(details.service_id)
         not_allow_keys, required_keys = verify_parameters(
-            allow_paras, details.parameters)
+            allow_params, details.parameters)
         if not_allow_keys:
             raise ErrBadRequest(
                 msg="parameters %s does not allowed" % not_allow_keys)
@@ -58,12 +60,8 @@ class HelmServiceBroker(ServiceBroker):
             raise ErrBadRequest(
                 msg="required parameters %s not exists" % required_keys)
         os.makedirs(instance_path, exist_ok=True)
-        chart_path, plan_path = (
-            get_chart_path(instance_id), get_plan_path(instance_id))
-        addon_chart_path, addon_plan_path = (
-            get_addon_path(details.service_id, details.plan_id))
-        shutil.copytree(addon_chart_path, chart_path)
-        shutil.copytree(addon_plan_path, plan_path)
+        chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)
+        fetch_chart_plan(details.service_id, chart_path, details.plan_id, plan_path)
         provision.delay(instance_id, details)
         return ProvisionedServiceSpec(state=ProvisionState.IS_ASYNC)
 
@@ -114,10 +112,9 @@ class HelmServiceBroker(ServiceBroker):
                async_allowed: bool,
                **kwargs
                ) -> UnbindSpec:
-        instance_path = get_instance_path(instance_id)
-        binding_info = f'{instance_path}/binding.json'
-        if os.path.exists(binding_info):
-            os.remove(binding_info)
+        binding_file = get_binding_file(instance_id)
+        if os.path.exists(binding_file):
+            os.remove(binding_file)
         return UnbindSpec(is_async=False)
 
     def update(self,
@@ -133,11 +130,11 @@ class HelmServiceBroker(ServiceBroker):
         if not is_plan_updateable:
             raise ErrBadRequest(
                 msg="Instance %s does not updateable" % instance_id)
-        allow_paras = get_addon_allow_paras(details.service_id)
+        allow_params = get_addon_allow_params(details.service_id)
         logger.debug(
             f"service instance update parameters: {details.parameters}")
         not_allow_keys, required_keys = verify_parameters(
-            allow_paras, details.parameters)
+            allow_params, details.parameters)
         if not_allow_keys:
             raise ErrBadRequest(
                 msg="parameters %s does not allowed" % not_allow_keys)
@@ -147,13 +144,8 @@ class HelmServiceBroker(ServiceBroker):
         if not async_allowed:
             raise ErrAsyncRequired()
         if details.plan_id is not None:
-            plan_path = get_plan_path(instance_id)
-            # delete the pre plan
-            shutil.rmtree(plan_path, ignore_errors=True)
-            _, addon_plan_path = get_addon_path(
-                details.service_id, details.plan_id)
-            # add the new plan
-            shutil.copytree(addon_plan_path, plan_path)
+            chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)
+            fetch_chart_plan(details.service_id, chart_path, details.plan_id, plan_path)
         update.delay(instance_id, details)
         return UpdateServiceSpec(is_async=True)
 
@@ -164,7 +156,7 @@ class HelmServiceBroker(ServiceBroker):
                     **kwargs) -> DeprovisionServiceSpec:
         if not os.path.exists(get_instance_path(instance_id)):
             raise ErrInstanceDoesNotExist()
-        with InstanceLock(instance_id):
+        with new_instance_lock(instance_id):
             data = load_instance_meta(instance_id)
             operation = data["last_operation"]["operation"]
             if operation == "provision":
@@ -181,11 +173,13 @@ class HelmServiceBroker(ServiceBroker):
                        operation_data: Optional[str],
                        **kwargs
                        ) -> LastOperation:
-        data = load_instance_meta(instance_id)
-        return LastOperation(
-            OperationState(data["last_operation"]["state"]),
-            data["last_operation"]["description"]
-        )
+        if os.path.exists(get_instance_file(instance_id)):
+            data = load_instance_meta(instance_id)
+            return LastOperation(
+                OperationState(data["last_operation"]["state"]),
+                data["last_operation"]["description"]
+            )
+        raise ErrInstanceDoesNotExist()
 
     def last_binding_operation(self,
                                instance_id: str,
@@ -193,8 +187,10 @@ class HelmServiceBroker(ServiceBroker):
                                operation_data: Optional[str],
                                **kwargs
                                ) -> LastOperation:
-        data = load_binding_meta(instance_id)
-        return LastOperation(
-            OperationState(data["last_operation"]["state"]),
-            data["last_operation"]["description"]
-        )
+        if os.path.exists(get_binding_file(instance_id)):
+            data = load_binding_meta(instance_id)
+            return LastOperation(
+                OperationState(data["last_operation"]["state"]),
+                data["last_operation"]["description"]
+            )
+        raise ErrBindingDoesNotExist()

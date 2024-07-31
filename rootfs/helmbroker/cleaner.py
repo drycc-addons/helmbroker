@@ -6,7 +6,8 @@ import shutil
 from openbrokerapi.service_broker import OperationState
 
 from .config import INSTANCES_PATH
-from .utils import get_instance_file, load_instance_meta
+from .database.query import get_instance_file
+from .database.metadata import load_instance_meta
 
 logger = logging.getLogger(__name__)
 
