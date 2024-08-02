@@ -6,7 +6,7 @@ from typing import Union, List, Optional
 from openbrokerapi.catalog import ServicePlan
 from openbrokerapi.errors import ErrInstanceAlreadyExists, ErrAsyncRequired, \
     ErrBindingAlreadyExists, ErrBadRequest, ErrInstanceDoesNotExist, \
-    ServiceException, ErrBindingDoesNotExist
+    ServiceException
 from openbrokerapi.service_broker import ServiceBroker, Service, \
     ProvisionDetails, ProvisionedServiceSpec, ProvisionState, GetBindingSpec, \
     BindDetails, Binding, BindState, UnbindDetails, UnbindSpec, \
@@ -19,7 +19,7 @@ from .database.query import get_instance_path, get_chart_path, get_plan_path, \
     get_addon_updateable, get_addon_bindable, get_addon_allow_params, \
     get_addon_archive, get_binding_file, get_instance_file
 from .database.metadata import load_instance_meta, load_binding_meta, load_addons_meta
-from .tasks import provision, bind, deprovision, update
+from .tasks import provision, bind, deprovision, update, unbind
 
 logger = logging.getLogger(__name__)
 
@@ -112,10 +112,9 @@ class HelmServiceBroker(ServiceBroker):
                async_allowed: bool,
                **kwargs
                ) -> UnbindSpec:
-        binding_file = get_binding_file(instance_id)
-        if os.path.exists(binding_file):
-            os.remove(binding_file)
-        return UnbindSpec(is_async=False)
+        logger.debug(f"unbind instance {instance_id}")
+        unbind.delay(instance_id)
+        return UnbindSpec(is_async=True)
 
     def update(self,
                instance_id: str,
@@ -179,7 +178,7 @@ class HelmServiceBroker(ServiceBroker):
                 OperationState(data["last_operation"]["state"]),
                 data["last_operation"]["description"]
             )
-        raise ErrInstanceDoesNotExist()
+        raise LastOperation(OperationState.IN_PROGRESS)
 
     def last_binding_operation(self,
                                instance_id: str,
@@ -193,4 +192,4 @@ class HelmServiceBroker(ServiceBroker):
                 OperationState(data["last_operation"]["state"]),
                 data["last_operation"]["description"]
             )
-        raise ErrBindingDoesNotExist()
+        return LastOperation(OperationState.SUCCEEDED)

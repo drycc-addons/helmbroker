@@ -11,7 +11,7 @@ from .utils import helm, format_params_to_helm_args, new_instance_lock, run_inst
 
 from .database.metadata import save_instance_meta, save_binding_meta, load_instance_meta
 from .database.savepoint import save_addon_values, backup_instance
-from .database.query import get_plan_path, get_chart_path, get_cred_value
+from .database.query import get_plan_path, get_chart_path, get_cred_value, get_binding_file
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +179,16 @@ def bind(instance_id: str,
         save_binding_meta(instance_id, data)
 
 
-@app.task()
+@app.task(serializer='pickle')
+def unbind(instance_id):
+    with new_instance_lock(instance_id), run_instance_hooks(instance_id, "deprovision"):
+        backup_instance(instance_id)
+        binding_file = get_binding_file(instance_id)
+        if os.path.exists(binding_file):
+            os.remove(binding_file)
+
+
+@app.task(serializer='pickle')
 def deprovision(instance_id: str):
     with new_instance_lock(instance_id), run_instance_hooks(instance_id, "deprovision"):
         backup_instance(instance_id)
