@@ -7,7 +7,7 @@ from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
     UpdateDetails, BindDetails
 
 from .celery import app
-from .utils import helm, format_params_to_helm_args, new_instance_lock
+from .utils import helm, format_params_to_helm_args, new_instance_lock, run_instance_hooks
 
 from .database.metadata import save_instance_meta, save_binding_meta, load_instance_meta
 from .database.savepoint import save_addon_values, backup_instance
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @app.task(serializer='pickle')
 def provision(instance_id: str, details: ProvisionDetails):
-    with new_instance_lock(instance_id):
+    with new_instance_lock(instance_id), run_instance_hooks(instance_id, "provision"):
         backup_instance(instance_id)
         # create instance.json
         save_instance_meta(instance_id, {
@@ -68,7 +68,7 @@ def provision(instance_id: str, details: ProvisionDetails):
 
 @app.task(serializer='pickle')
 def update(instance_id: str, details: UpdateDetails):
-    with new_instance_lock(instance_id):
+    with new_instance_lock(instance_id), run_instance_hooks(instance_id, "update"):
         backup_instance(instance_id)
         data = load_instance_meta(instance_id)
         if details.service_id:
@@ -119,7 +119,7 @@ def bind(instance_id: str,
          details: BindDetails,
          async_allowed: bool,
          **kwargs):
-    with new_instance_lock(instance_id):
+    with new_instance_lock(instance_id), run_instance_hooks(instance_id, "bind"):
         backup_instance(instance_id)
         data = {
             "binding_id": binding_id, "credentials": {},
@@ -181,7 +181,7 @@ def bind(instance_id: str,
 
 @app.task()
 def deprovision(instance_id: str):
-    with new_instance_lock(instance_id):
+    with new_instance_lock(instance_id), run_instance_hooks(instance_id, "deprovision"):
         backup_instance(instance_id)
         data = load_instance_meta(instance_id)
         data["last_operation"]["operation"] = "deprovision"

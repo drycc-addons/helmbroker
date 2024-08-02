@@ -6,6 +6,7 @@ import base64
 import copy
 import logging
 
+from contextlib import contextmanager
 from redis import client
 from .config import REDIS_URL
 
@@ -44,6 +45,33 @@ def helm(instance_id, *args, output_type="text"):
 def new_instance_lock(instance_id):
     redis = client.Redis.from_url(REDIS_URL)
     return redis.lock(instance_id)
+
+
+@contextmanager
+def run_instance_hooks(instance_id, stage):
+    if stage not in ["provision", "bind", "unbind", "update", "deprovision"]:
+        raise ValueError(f"Unknown stage {stage}")
+    from .database.query import get_hooks_path
+    from .database.savepoint import save_hooks_result
+    pre_script_file = os.path.join(get_hooks_path(instance_id), f"pre_{stage}.sh")
+    post_script_file = os.path.join(get_hooks_path(instance_id), f"post_{stage}.sh")
+    logger.debug(f"instance hook running: {instance_id}, {instance_id}")
+    result = []
+    try:
+        if os.path.exists(pre_script_file):
+            status, output = subprocess.getstatusoutput(pre_script_file)
+            result.append({"script": pre_script_file, "status": status, "output": output})
+        else:
+            logger.debug(f"skip running {pre_script_file}")
+        yield
+    finally:
+        if os.path.exists(pre_script_file):
+            status, output = subprocess.getstatusoutput(post_script_file)
+            result.append({"script": pre_script_file, "status": status, "output": output})
+        else:
+            logger.debug(f"skip running {post_script_file}")
+    save_hooks_result(instance_id, result)
+    logger.debug(f"instance hook completed: {instance_id}, {instance_id}")
 
 
 def verify_parameters(allow_parameters, parameters):

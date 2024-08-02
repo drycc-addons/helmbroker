@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 import yaml
 import shutil
@@ -6,9 +7,29 @@ import datetime
 
 from ..config import CONFIG_PATH
 from .query import get_instance_path, get_backups_path, get_addon_meta, get_addon_values_file, \
-    get_custom_addon_values_file
+    get_custom_addon_values_file, get_hooks_result_file
 
 logger = logging.getLogger(__name__)
+
+
+def backup_instance(instance_id):
+    now = datetime.datetime.now(datetime.timezone.utc)
+    backup_path = os.path.join(get_backups_path(instance_id), now.isoformat())
+    os.makedirs(backup_path, exist_ok=True)
+
+    hooks_result_file = get_hooks_result_file(instance_id)
+    if os.path.exists(hooks_result_file):
+        shutil.copy(hooks_result_file, backup_path)
+    addon_values_file = get_addon_values_file(instance_id)
+    if os.path.exists(addon_values_file):
+        shutil.copy(addon_values_file, backup_path)
+    custom_addon_values_file = get_custom_addon_values_file(instance_id)
+    if os.path.exists(custom_addon_values_file):
+        shutil.copy(custom_addon_values_file, backup_path)
+
+    instance_path = get_instance_path(instance_id)
+    shutil.copytree(os.path.join(instance_path, "plan"), os.path.join(backup_path, "plan"))
+    shutil.copytree(os.path.join(instance_path, "chart"), os.path.join(backup_path, "chart"))
 
 
 def save_raw_values(instance_id, data):
@@ -37,18 +58,8 @@ def save_addon_values(service_id, instance_id):
     return file
 
 
-def backup_instance(instance_id):
-    now = datetime.datetime.now(datetime.timezone.utc)
-    backup_path = os.path.join(get_backups_path(instance_id), now.isoformat())
-    os.makedirs(backup_path, exist_ok=True)
-
-    addon_values_file = get_addon_values_file(instance_id)
-    if os.path.exists(addon_values_file):
-        shutil.copy(addon_values_file, backup_path)
-    custom_addon_values_file = get_custom_addon_values_file(instance_id)
-    if os.path.exists(custom_addon_values_file):
-        shutil.copy(custom_addon_values_file, backup_path)
-
-    instance_path = get_instance_path(instance_id)
-    shutil.copytree(os.path.join(instance_path, "plan"), os.path.join(backup_path, "plan"))
-    shutil.copytree(os.path.join(instance_path, "chart"), os.path.join(backup_path, "chart"))
+def save_hooks_result(instance_id, data):
+    file = get_hooks_result_file(instance_id)
+    with open(file, "w") as f:
+        f.write(json.dumps(data, sort_keys=True, indent=2))
+    return file
