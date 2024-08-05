@@ -70,7 +70,7 @@ def run_instance_hooks(instance_id, stage):
             result.append({"script": pre_script_file, "status": status, "output": output})
         else:
             logger.debug(f"skip running {post_script_file}")
-    save_hooks_result(instance_id, result)
+        save_hooks_result(instance_id, result)
     logger.debug(f"instance hook completed: {instance_id}, {instance_id}")
 
 
