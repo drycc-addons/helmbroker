@@ -178,7 +178,7 @@ class HelmServiceBroker(ServiceBroker):
                 OperationState(data["last_operation"]["state"]),
                 data["last_operation"]["description"]
             )
-        raise LastOperation(OperationState.IN_PROGRESS)
+        return LastOperation(OperationState.IN_PROGRESS)
 
     def last_binding_operation(self,
                                instance_id: str,
@@ -192,4 +192,4 @@ class HelmServiceBroker(ServiceBroker):
                 OperationState(data["last_operation"]["state"]),
                 data["last_operation"]["description"]
             )
-        return LastOperation(OperationState.SUCCEEDED)
+        return LastOperation(OperationState.IN_PROGRESS)

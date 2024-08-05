@@ -62,8 +62,9 @@ def run_instance_hooks(instance_id, stage):
             status, output = subprocess.getstatusoutput(pre_script_file)
             result.append({"script": pre_script_file, "status": status, "output": output})
         else:
-            logger.debug(f"skip running {pre_script_file}")
-        yield
+            status, output = 0, f"skip running {pre_script_file}"
+            logger.debug(output)
+        yield status, output
     finally:
         if os.path.exists(pre_script_file):
             status, output = subprocess.getstatusoutput(post_script_file)

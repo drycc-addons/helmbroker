@@ -9,7 +9,8 @@ from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
 from .celery import app
 from .utils import helm, format_params_to_helm_args, new_instance_lock, run_instance_hooks
 
-from .database.metadata import save_instance_meta, save_binding_meta, load_instance_meta
+from .database.metadata import save_instance_meta, save_binding_meta, load_instance_meta, \
+    load_binding_meta
 from .database.savepoint import save_addon_values, backup_instance
 from .database.query import get_plan_path, get_chart_path, get_cred_value, get_binding_file
 
@@ -18,22 +19,30 @@ logger = logging.getLogger(__name__)
 
 @app.task(serializer='pickle')
 def provision(instance_id: str, details: ProvisionDetails):
-    with new_instance_lock(instance_id), run_instance_hooks(instance_id, "provision"):
+    with (
+        new_instance_lock(instance_id),
+        run_instance_hooks(instance_id, "provision") as (status, output)
+    ):
         backup_instance(instance_id)
         # create instance.json
-        save_instance_meta(instance_id, {
-            "id": instance_id,
+        data = {
+            "id": instance_id, "last_operation": {},
             "details": {
                 "service_id": details.service_id, "plan_id": details.plan_id,
                 "context": details.context,
                 "parameters": details.parameters if details.parameters else {},
             },
-            "last_operation": {
-                "state": OperationState.IN_PROGRESS.value, "operation": "provision",
-                "description": ("provision %s in progress at %s" % (instance_id, time.time()))
-            }
-        })
-
+        }
+        if status != 0:
+            data["last_operation"]["state"] = OperationState.FAILED.value
+            data["last_operation"]["description"] = f"provision {instance_id} error: {output}"
+            save_instance_meta(instance_id, data)
+            return
+        data["last_operation"]["state"] = OperationState.IN_PROGRESS.value
+        data["last_operation"]["operation"] = "provision"
+        data["last_operation"]["description"] = (
+            f"provision {instance_id} in progress at {time.time()}")
+        save_instance_meta(instance_id, data)
         chart_path = get_chart_path(instance_id)
         bind_yaml = f'{chart_path}/templates/bind.yaml'
         if os.path.exists(bind_yaml):
@@ -56,19 +65,22 @@ def provision(instance_id: str, details: ProvisionDetails):
         args = format_params_to_helm_args(instance_id, details.parameters, args)
         logger.debug(f"helm install args:{args}")
         status, output = helm(instance_id, *args)
-        data = load_instance_meta(instance_id)
         if status != 0:
             data["last_operation"]["state"] = OperationState.FAILED.value
-            data["last_operation"]["description"] = "provision error:\n%s" % output
+            data["last_operation"]["description"] = f"provision {instance_id} error: {output}"
         else:
             data["last_operation"]["state"] = OperationState.SUCCEEDED.value
-            data["last_operation"]["description"] = "provision succeeded at %s" % time.time()
+            data["last_operation"]["description"] = (
+                f"provision {instance_id} succeeded at {time.time()}")
         save_instance_meta(instance_id, data)
 
 
 @app.task(serializer='pickle')
 def update(instance_id: str, details: UpdateDetails):
-    with new_instance_lock(instance_id), run_instance_hooks(instance_id, "update"):
+    with (
+        new_instance_lock(instance_id),
+        run_instance_hooks(instance_id, "update") as (status, output)
+    ):
         backup_instance(instance_id)
         data = load_instance_meta(instance_id)
         if details.service_id:
@@ -82,9 +94,14 @@ def update(instance_id: str, details: UpdateDetails):
             params.update(details.parameters)
             # remove the key which value is null
             data['details']['parameters'] = {k: v for k, v in params.items() if v != ""}
+        if status != 0:
+            data["last_operation"]["state"] = OperationState.FAILED.value
+            data["last_operation"]["description"] = f"update {instance_id} failed: {output}"
+            save_instance_meta(instance_id, data)
+            return
         data['last_operation']["state"] = OperationState.IN_PROGRESS.value
-        data['last_operation']["description"] = "update %s in progress at %s" % (
-            instance_id, time.time())
+        data['last_operation']["description"] = (
+            f"update {instance_id} in progress at {time.time()}")
         save_instance_meta(instance_id, data)
         chart_path = get_chart_path(instance_id)
         values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
@@ -105,11 +122,11 @@ def update(instance_id: str, details: UpdateDetails):
         status, output = helm(instance_id, *args)
         if status != 0:
             data["last_operation"]["state"] = OperationState.FAILED.value
-            data["last_operation"]["description"] = "update %s failed: %s" % (instance_id, output)
+            data["last_operation"]["description"] = f"update {time.time()} failed: {output}"
         else:
             data["last_operation"]["state"] = OperationState.SUCCEEDED.value
             data["last_operation"]["description"] = (
-                "update %s succeeded at %s" % (instance_id, time.time()))
+                f"update {instance_id} succeeded at {time.time()}")
         save_instance_meta(instance_id, data)
 
 
@@ -119,15 +136,17 @@ def bind(instance_id: str,
          details: BindDetails,
          async_allowed: bool,
          **kwargs):
-    with new_instance_lock(instance_id), run_instance_hooks(instance_id, "bind"):
+    with (
+        new_instance_lock(instance_id),
+        run_instance_hooks(instance_id, "bind") as (status, output)
+    ):
         backup_instance(instance_id)
-        data = {
-            "binding_id": binding_id, "credentials": {},
-            "last_operation": {
-                "state": OperationState.IN_PROGRESS.value,
-                "description": "binding %s in progress at %s" % (binding_id, time.time())
-            }
-        }
+        data = {"binding_id": binding_id, "credentials": {}, "last_operation": {}}
+        if status != 0:
+            data["last_operation"]["state"] = OperationState.FAILED.value
+            data["last_operation"]["description"] = f"binding {instance_id} failed: {output}"
+            save_binding_meta(instance_id, data)
+            return
         save_binding_meta(instance_id, data)
         chart_path = get_chart_path(instance_id)
         values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
@@ -145,9 +164,7 @@ def bind(instance_id: str,
         status, templates = helm(instance_id, *args)  # output: templates.yaml
         if status != 0:
             data["last_operation"]["state"] = OperationState.FAILED.value
-            data["last_operation"]["description"] = "binding %s failed: %s" % (
-                instance_id, templates)
-
+            data["last_operation"]["description"] = f"binding {instance_id} failed: {templates}"
         credential_template = yaml.load(templates.split('bind.yaml')[1], Loader=yaml.Loader)
         success_flag = True
         errors = []
@@ -164,15 +181,13 @@ def bind(instance_id: str,
             else:
                 data['credentials'][_['name']] = val
         if success_flag:
-            data['last_operation'] = {
-                'state': OperationState.SUCCEEDED.value,
-                'description': "binding %s succeeded at %s" % (instance_id, time.time())
-            }
+            data['last_operation']['state'] = OperationState.SUCCEEDED.value
+            data['last_operation']['description'] = (
+                f"binding {instance_id} succeeded at {time.time()}")
         else:
-            data['last_operation'] = {
-                'state': OperationState.FAILED.value,
-                'description': "binding %s failed: %s" % (instance_id, ','.join(errors))
-            }
+            data['last_operation']['state'] = OperationState.FAILED.value
+            data['last_operation']['description'] = (
+                f"binding {instance_id} failed: {','.join(errors)}")
         bind_yaml = f'{chart_path}/templates/bind.yaml'
         if os.path.exists(bind_yaml):
             os.remove(bind_yaml)
@@ -181,22 +196,43 @@ def bind(instance_id: str,
 
 @app.task(serializer='pickle')
 def unbind(instance_id):
-    with new_instance_lock(instance_id), run_instance_hooks(instance_id, "deprovision"):
+    with (
+        new_instance_lock(instance_id),
+        run_instance_hooks(instance_id, "deprovision") as (status, output)
+    ):
         backup_instance(instance_id)
+        data = load_binding_meta(instance_id)
+        if status != 0:
+            data['last_operation']['state'] = OperationState.FAILED.value
+            data['last_operation']['description'] = f"unbind {instance_id} failed: {output}"
+            save_binding_meta(instance_id, data)
+            return
         binding_file = get_binding_file(instance_id)
         if os.path.exists(binding_file):
             os.remove(binding_file)
+        data['last_operation']['state'] = OperationState.SUCCEEDED.value
+        data['last_operation']['description'] = f"unbind {instance_id} succeeded at {time.time()}"
+        save_binding_meta(instance_id, data)
 
 
 @app.task(serializer='pickle')
 def deprovision(instance_id: str):
-    with new_instance_lock(instance_id), run_instance_hooks(instance_id, "deprovision"):
+    with (
+        new_instance_lock(instance_id),
+        run_instance_hooks(instance_id, "deprovision") as (status, output)
+    ):
         backup_instance(instance_id)
         data = load_instance_meta(instance_id)
+        if status != 0:
+            data["last_operation"]["operation"] = "deprovision"
+            data["last_operation"]["state"] = OperationState.FAILED.value
+            data["last_operation"]["description"] = f"deprovision {instance_id} failed: {output}"
+            save_instance_meta(instance_id, data)
+            return
         data["last_operation"]["operation"] = "deprovision"
         data["last_operation"]["state"] = OperationState.IN_PROGRESS.value
         data["last_operation"]["description"] = (
-            "deprovision %s in progress at %s" % (instance_id, time.time()))
+            f"deprovision {instance_id} in progress at {time.time()}")
         save_instance_meta(instance_id, data)
         args = [
             "uninstall", data["details"]["context"]["instance_name"],
@@ -206,8 +242,9 @@ def deprovision(instance_id: str):
         status, output = helm(instance_id, *args)
         if status != 0:
             data["last_operation"]["state"] = OperationState.FAILED.value
-            data["last_operation"]["description"] = "deprovision error:\n%s" % output
+            data["last_operation"]["description"] = f"deprovision {instance_id} failed: {output}"
         else:
             data["last_operation"]["state"] = OperationState.SUCCEEDED.value
-            data["last_operation"]["description"] = "deprovision succeeded at %s" % time.time()
+            data["last_operation"]["description"] = (
+                f"deprovision {instance_id} succeeded at {time.time()}")
         save_instance_meta(instance_id, data)
