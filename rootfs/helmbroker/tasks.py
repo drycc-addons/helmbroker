@@ -61,9 +61,9 @@ def provision(instance_id: str, details: ProvisionDetails):
         if addon_values_file:
             args.insert(9, "-f")
             args.insert(10, addon_values_file)
-        logger.debug(f"helm install parameters :{details.parameters}")
+        logger.debug(f"helm install parameters: {details.parameters}")
         args = format_params_to_helm_args(instance_id, details.parameters, args)
-        logger.debug(f"helm install args:{args}")
+        logger.debug(f"helm install args: {args}")
         status, output = helm(instance_id, *args)
         if status != 0:
             data["last_operation"]["state"] = OperationState.FAILED.value
@@ -118,7 +118,7 @@ def update(instance_id: str, details: UpdateDetails):
         params = data['details']['parameters']
         logger.debug(f"helm upgrade parameters: {params}")
         args = format_params_to_helm_args(instance_id, params, args)
-        logger.debug(f"helm upgrade args:{args}")
+        logger.debug(f"helm upgrade args: {args}")
         status, output = helm(instance_id, *args)
         if status != 0:
             data["last_operation"]["state"] = OperationState.FAILED.value

@@ -3,4 +3,4 @@
 # This script is designed to be run inside the container
 #
 
-python -m unittest tests/test_*.py
+coverage run -m unittest tests/test_*.py

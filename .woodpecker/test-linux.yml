@@ -11,10 +11,11 @@ steps:
 - name: test-linux
   image: bash
   commands:
-  - make test
+  - make test upload-coverage
   secrets:
   - codename
   - dev_registry
+  - codecov_token
   when:
     event:
     - push

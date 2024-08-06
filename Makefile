@@ -61,6 +61,6 @@ test-integration:
 
 upload-coverage:
 	$(eval CI_ENV := $(shell curl -s https://codecov.io/env | bash))
-	podman run --rm ${CI_ENV} -v ${CURDIR}:/tmp/test -w /tmp/test/rootfs ${IMAGE}.test /tmp/test/rootfs/bin/upload-coverage
+	podman run --rm ${CI_ENV} -v ${CURDIR}:/tmp/test -w /tmp/test/rootfs -e CODECOV_TOKEN=${CODECOV_TOKEN} ${IMAGE}.test /tmp/test/rootfs/bin/upload-coverage
 
 .PHONY: check-kubectl check-podman build podman-build podman-build-test deploy clean commit-hook full-clean test test-style test-unit test-functional test-integration upload-coverage
