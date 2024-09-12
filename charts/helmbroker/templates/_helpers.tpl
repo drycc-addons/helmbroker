@@ -22,7 +22,7 @@ env:
       name: rabbitmq-creds
       key: password
 - name: "HELMBROKER_RABBITMQ_URL"
-  value: "amqp://$(HELMBROKER_RABBITMQ_USERNAME):$(HELMBROKER_RABBITMQ_PASSWORD)@drycc-rabbitmq.{{$.Release.Namespace}}.svc.{{$.Values.global.clusterDomain}}:5672/drycc"
+  value: "amqp://$(HELMBROKER_RABBITMQ_USERNAME):$(HELMBROKER_RABBITMQ_PASSWORD)@drycc-rabbitmq.{{$.Release.Namespace}}.svc.{{$.Values.global.clusterDomain}}:5672/helmbroker"
 {{- end }}
 {{- if (.Values.redisUrl) }}
 - name: HELMBROKER_REDIS_URL

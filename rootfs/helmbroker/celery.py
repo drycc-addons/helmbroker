@@ -33,43 +33,33 @@ app.conf.update(
     task_routes={
         'helmbroker.tasks.provision': {
             'queue': 'helmbroker.high',
-            'exchange': 'helmbroker.priority',
-            'routing_key': 'helmbroker.priority.high',
+            'exchange': 'helmbroker.priority', 'routing_key': 'helmbroker.priority.high',
         },
         'helmbroker.tasks.update': {
             'queue': 'helmbroker.high',
-            'exchange': 'helmbroker.priority',
-            'routing_key': 'helmbroker.priority.high',
+            'exchange': 'helmbroker.priority', 'routing_key': 'helmbroker.priority.high',
         },
         'helmbroker.tasks.bind': {
             'queue': 'helmbroker.high',
-            'exchange': 'helmbroker.priority',
-            'routing_key': 'helmbroker.priority.high',
+            'exchange': 'helmbroker.priority', 'routing_key': 'helmbroker.priority.high',
         },
         'helmbroker.tasks.deprovision': {
             'queue': 'helmbroker.middle',
-            'exchange': 'helmbroker.priority',
-            'routing_key': 'helmbroker.priority.middle',
+            'exchange': 'helmbroker.priority', 'routing_key': 'helmbroker.priority.middle',
         },
     },
     task_queues=(
         Queue(
-            'helmbroker.low',
-            exchange=Exchange('helmbroker.priority', type="direct"),
-            routing_key='helmbroker.priority.low',
-            queue_arguments={'x-max-priority': 16},
+            'helmbroker.low', exchange=Exchange('helmbroker.priority', type="direct"),
+            routing_key='helmbroker.priority.low', queue_arguments={'x-queue-type': 'quorum'},
         ),
         Queue(
-            'helmbroker.high',
-            exchange=Exchange('helmbroker.priority', type="direct"),
-            routing_key='helmbroker.priority.high',
-            queue_arguments={'x-max-priority': 64},
+            'helmbroker.high', exchange=Exchange('helmbroker.priority', type="direct"),
+            routing_key='helmbroker.priority.high', queue_arguments={'x-queue-type': 'quorum'},
         ),
         Queue(
-            'helmbroker.middle',
-            exchange=Exchange('helmbroker.priority', type="direct"),
-            routing_key='helmbroker.priority.middle',
-            queue_arguments={'x-max-priority': 32},
+            'helmbroker.middle', exchange=Exchange('helmbroker.priority', type="direct"),
+            routing_key='helmbroker.priority.middle', queue_arguments={'x-queue-type': 'quorum'},
         ),
     ),
 )
