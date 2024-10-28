@@ -165,10 +165,14 @@ def bind(instance_id: str,
         if status != 0:
             data["last_operation"]["state"] = OperationState.FAILED.value
             data["last_operation"]["description"] = f"binding {instance_id} failed: {templates}"
-        credential_template = yaml.load(templates.split('bind.yaml')[1], Loader=yaml.Loader)
+        credential_template = {}
+        templates = yaml.load_all(templates, Loader=yaml.SafeLoader)
+        credential_template = next(
+            (item for item in templates if isinstance(item, dict) and "credential" in item), {}
+        )
         success_flag = True
         errors = []
-        for _ in credential_template['credential']:
+        for _ in credential_template.get('credential', {}):
             if _.get('valueFrom'):
                 status, val = get_cred_value(details.context["namespace"], _['valueFrom'])
             elif _.get('value'):
