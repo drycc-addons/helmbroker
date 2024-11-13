@@ -108,7 +108,7 @@ def update(instance_id: str, details: UpdateDetails):
         args = [
             "upgrade", details.context["instance_name"], chart_path,
             "--namespace", details.context["namespace"], "--create-namespace",
-            "--wait", "--timeout", "25m0s", "--reuse-values", "-f", values_file,
+            "--wait", "--timeout", "25m0s", "--reset-then-reuse-values", "-f", values_file,
             "--set", f"fullnameOverride=helmbroker-{details.context['instance_name']}"
         ]
         addon_values_file = save_addon_values(details.service_id, instance_id)
