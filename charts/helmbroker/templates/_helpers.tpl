@@ -7,39 +7,20 @@ env:
   value: {{ if .Values.username | default "" | ne "" }}{{ .Values.username }}{{ else }}{{ randAlphaNum 32 }}{{ end }}
 - name: HELMBROKER_PASSWORD
   value: {{ if .Values.password | default "" | ne "" }}{{ .Values.password }}{{ else }}{{ randAlphaNum 32 }}{{ end }}
-{{- if (.Values.rabbitmqUrl) }}
-- name: HELMBROKER_RABBITMQ_URL
-  value: {{ .Values.rabbitmqUrl }}
-{{- else if eq .Values.global.rabbitmqLocation "on-cluster" }}
-- name: "HELMBROKER_RABBITMQ_USERNAME"
+{{- if (.Values.valkeyUrl) }}
+- name: HELMBROKER_VALKEY_URL
   valueFrom:
     secretKeyRef:
-      name: rabbitmq-creds
-      key: username
-- name: "HELMBROKER_RABBITMQ_PASSWORD"
+      name: helmbroker-creds
+      key: valkey-url
+{{- else if eq .Values.global.valkeyLocation "on-cluster"  }}
+- name: VALKEY_PASSWORD
   valueFrom:
     secretKeyRef:
-      name: rabbitmq-creds
+      name: valkey-creds
       key: password
-- name: "HELMBROKER_RABBITMQ_URL"
-  value: "amqp://$(HELMBROKER_RABBITMQ_USERNAME):$(HELMBROKER_RABBITMQ_PASSWORD)@drycc-rabbitmq.{{$.Release.Namespace}}.svc.{{$.Values.global.clusterDomain}}:5672/helmbroker"
-{{- end }}
-{{- if (.Values.redisUrl) }}
-- name: HELMBROKER_REDIS_URL
-  value: {{ .Values.redisUrl }}
-{{- else if eq .Values.global.redisLocation "on-cluster" }}
-- name: "HELMBROKER_REDIS_ADDRS"
-  valueFrom:
-    secretKeyRef:
-      name: redis-creds
-      key: addrs
-- name: "HELMBROKER_REDIS_PASSWORD"
-  valueFrom:
-    secretKeyRef:
-      name: redis-creds
-      key: password
-- name: "HELMBROKER_REDIS_URL"
-  value: "redis://:$(HELMBROKER_REDIS_PASSWORD)@$(HELMBROKER_REDIS_ADDRS)/0"
+- name: HELMBROKER_VALKEY_URL
+  value: "redis://:$(VALKEY_PASSWORD)@drycc-valkey.{{.Release.Namespace}}.svc.{{.Values.global.clusterDomain}}:26379/0?master_set=drycc"
 {{- end }}
 {{- range $key, $value := .Values.environment }}
 - name: {{ $key }}

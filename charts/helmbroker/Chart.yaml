@@ -6,11 +6,8 @@ dependencies:
   - name: common
     repository: oci://registry.drycc.cc/charts
     version: ~1.1.2
-  - name: redis
-    repository: oci://registry.drycc.cc/charts
-    version: x.x.x
-  - name: rabbitmq
-    repository: oci://registry.drycc.cc/charts
+  - name: valkey
+    repository: {{repository}}
     version: x.x.x
 description: Drycc Workflow helmbroker.
 maintainers:

@@ -4,8 +4,8 @@ import time
 import logging
 import jsonschema
 
-from redis import client
-from ..config import ADDONS_PATH, REDIS_URL
+from ..utils import get_valkey_client
+from ..config import ADDONS_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -116,21 +116,20 @@ def save_instance_meta(instance_id, data):
     json_data = json.dumps(data, sort_keys=True, indent=2)
     with open(file, "w") as f:
         f.write(json_data)
-    redis = client.Redis.from_url(REDIS_URL)
-    redis.set(cache_key, json_data)
+    get_valkey_client().set(cache_key, json_data)
 
 
 def load_instance_meta(instance_id):
     cache_key = f"helmbroker:instance:{instance_id}"
-    redis = client.Redis.from_url(REDIS_URL)
+    valkey = get_valkey_client()
 
-    json_data = redis.get(cache_key)
+    json_data = valkey.get(cache_key)
     if not json_data:
         from .query import get_instance_file
         file = get_instance_file(instance_id)
         with open(file) as f:
             json_data = f.read()
-            redis.set(cache_key, json_data)
+            valkey.set(cache_key, json_data)
     return json.loads(json_data)
 
 
@@ -144,20 +143,19 @@ def save_binding_meta(instance_id, data):
     json_data = json.dumps(data, sort_keys=True, indent=2)
     with open(file, "w") as f:
         f.write(json_data)
-    redis = client.Redis.from_url(REDIS_URL)
-    redis.set(cache_key, json_data)
+    get_valkey_client().set(cache_key, json_data)
 
 
 def load_binding_meta(instance_id):
     from .query import get_binding_file
     cache_key = f"helmbroker:binding:{instance_id}"
-    redis = client.Redis.from_url(REDIS_URL)
-    json_data = redis.get(cache_key)
+    valkey = get_valkey_client()
+    json_data = valkey.get(cache_key)
     if not json_data:
         file = get_binding_file(instance_id)
         with open(file, 'r') as f:
             json_data = f.read()
-            redis.set(cache_key, json_data)
+            valkey.set(cache_key, json_data)
     return json.loads(json_data)
 
 
@@ -170,18 +168,17 @@ def save_addons_meta(data):
     json_data = json.dumps(data, sort_keys=True, indent=2)
     with open(file, "w") as f:
         f.write(json_data)
-    redis = client.Redis.from_url(REDIS_URL)
-    redis.set(cache_key, json_data)
+    get_valkey_client().set(cache_key, json_data)
 
 
 def load_addons_meta():
     cache_key = "helmbroker:addons"
-    redis = client.Redis.from_url(REDIS_URL)
+    valkey = get_valkey_client()
 
-    json_data = redis.get(cache_key)
+    json_data = valkey.get(cache_key)
     if not json_data:
         file = os.path.join(ADDONS_PATH, "addons.json")
         with open(file, 'r') as f:
             json_data = f.read()
-            redis.set(cache_key, json_data)
+            valkey.set(cache_key, json_data)
     return json.loads(json_data)

@@ -58,7 +58,7 @@ def _fetch_addon(url, dest):
         os.makedirs(dest, exist_ok=True)
         with tarfile.open(fileobj=tgz_file, mode="r:gz") as tarobj:
             for tarinfo in tarobj:
-                tarobj.extract(tarinfo.name, dest)
+                tarobj.extract(tarinfo.name, dest, filter='data')
         filename1 = os.path.join(dest, "meta.yaml")
         with open(filename1, "r") as f1:
             meta = yaml.load(stream=f1, Loader=yaml.Loader)

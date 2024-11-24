@@ -10,7 +10,7 @@ INSTANCES_PATH = os.path.join(CONFIG_ROOT, 'instances')
 USERNAME = os.environ.get('HELMBROKER_USERNAME')
 PASSWORD = os.environ.get('HELMBROKER_PASSWORD')
 
-REDIS_URL = os.environ.get("HELMBROKER_REDIS_URL", 'redis://localhost:6379/0')
+VALKEY_URL = os.environ.get("HELMBROKER_VALKEY_URL", 'redis://localhost:6379/0')
 
 
 class Config:

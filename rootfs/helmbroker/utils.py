@@ -5,13 +5,13 @@ import subprocess
 import base64
 import copy
 import logging
-
+from urllib.parse import urlparse, parse_qs
 from contextlib import contextmanager
-from redis import client
-from .config import REDIS_URL
+from redis.client import Redis
+from redis.sentinel import Sentinel
+from .config import VALKEY_URL
 
 logger = logging.getLogger(__name__)
-
 REGISTRY_CONFIG_SUFFIX = '.config/helm/registry.json'
 REPOSITORY_CACHE_SUFFIX = '.cache/helm/repository'
 REPOSITORY_CONFIG_SUFFIX = '.config/helm/repository'
@@ -42,9 +42,23 @@ def helm(instance_id, *args, output_type="text"):
     return command("helm", *new_args, output_type=output_type)
 
 
+def get_valkey_client():
+    url = urlparse(VALKEY_URL)
+    query = parse_qs(url.query)
+    if 'master_set' in query:
+        user, host = url.netloc.split("@")
+        password = user.split(":")[1]
+        sentinel = Sentinel(
+            [host.split(":")],
+            sentinel_kwargs={'password': password},
+            password=password,
+        )
+        return sentinel.master_for(query['master_set'][0], socket_timeout=1)
+    return Redis.from_url(VALKEY_URL)
+
+
 def new_instance_lock(instance_id):
-    redis = client.Redis.from_url(REDIS_URL)
-    return redis.lock(instance_id)
+    return get_valkey_client().lock(instance_id)
 
 
 @contextmanager

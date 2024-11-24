@@ -23,8 +23,8 @@ diagnosticMode:
 
 ## config the helm-broker repositories
 repositories:
-- name: drycc-helm-broker
-  url: https://github.com/drycc/addons/releases/download/latest/index.yaml
+  - name: drycc-helm-broker
+    url: https://github.com/drycc/addons/releases/download/latest/index.yaml
 
 celeryReplicas: 1
 
@@ -33,11 +33,8 @@ celeryReplicas: 1
 username: admin
 password: admin
 
-# Configuring this will no longer use the built-in redis component
-redisUrl: ""
-
-# Configuring this will no longer use the built-in rabbitmq component
-rabbitmqUrl: ""
+# Configuring this will no longer use the built-in valkey component
+valkeyUrl: ""
 
 # Any custom controller environment variables
 # can be specified as key-value pairs under environment
@@ -51,7 +48,7 @@ api:
     key: "drycc.cc/node"
     type: "soft"
     values:
-    - "true"
+      - "true"
   podAffinityPreset:
     type: ""
     extraMatchLabels:
@@ -66,7 +63,7 @@ celery:
     key: "drycc.cc/node"
     type: "soft"
     values:
-    - "true"
+      - "true"
   podAffinityPreset:
     type: ""
     extraMatchLabels:
@@ -75,10 +72,6 @@ celery:
     type: "soft"
     extraMatchLabels:
       app: "drycc-helmbroker-celery"
-
-# drycc redis replicas must always be set to 1
-redis:
-  replicas: 1
 
 # Default override of addon values
 addonValues: {}
@@ -91,16 +84,11 @@ persistence:
   volumeName: ""
 
 global:
-  # Set the location of Workflow's redis instance
+  # Set the location of Workflow's valkey instance
   # Valid values are:
-  # - on-cluster: Run Redis within the Kubernetes cluster
-  # - off-cluster: Run Redis outside the Kubernetes cluster (configure in controller section)
-  redisLocation: "on-cluster"
-  # Set the location of Workflow's rabbitmq instance
-  # Valid values are:
-  # - on-cluster: Run Rabbitmq within the Kubernetes cluster
-  # - off-cluster: Run Rabbitmq outside the Kubernetes cluster (configure in controller section)
-  rabbitmqLocation: "on-cluster"
+  # - on-cluster: Run Valkey within the Kubernetes cluster
+  # - off-cluster: Run Valkey outside the Kubernetes cluster (configure in controller section)
+  valkeyLocation: "on-cluster"
   # Enable usage of RBAC authorization mode
   #
   # Valid values are:

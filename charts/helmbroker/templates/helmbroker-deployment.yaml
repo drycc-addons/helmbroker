@@ -34,7 +34,7 @@ spec:
           - netcat
           - -v
           - -u
-          - $(HELMBROKER_REDIS_URL),$(HELMBROKER_RABBITMQ_URL)
+          - $(HELMBROKER_VALKEY_URL)
         {{- include "helmbroker.envs" . | indent 10 }}
         - name: drycc-helmbroker-fetch
           image: {{.Values.imageRegistry}}/{{.Values.imageOrg}}/helmbroker:{{.Values.imageTag}}
