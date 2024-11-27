@@ -1,6 +1,6 @@
 import os
-import shutil
 import logging
+import time
 from typing import Union, List, Optional
 
 from openbrokerapi.catalog import ServicePlan
@@ -18,7 +18,8 @@ from .database.fetch import fetch_chart_plan
 from .database.query import get_instance_path, get_chart_path, get_plan_path, \
     get_addon_updateable, get_addon_bindable, get_addon_allow_params, \
     get_addon_archive, get_binding_file, get_instance_file
-from .database.metadata import load_instance_meta, load_binding_meta, load_addons_meta
+from .database.metadata import load_instance_meta, load_binding_meta, load_addons_meta, \
+    save_instance_meta
 from .tasks import provision, bind, deprovision, update, unbind
 
 logger = logging.getLogger(__name__)
@@ -94,9 +95,6 @@ class HelmServiceBroker(ServiceBroker):
         instance_path = get_instance_path(instance_id)
         if os.path.exists(f'{instance_path}/bind.json'):
             raise ErrBindingAlreadyExists()
-        chart_path, plan_path = (
-            get_chart_path(instance_id), get_plan_path(instance_id))
-        shutil.copy(f'{plan_path}/bind.yaml', f'{chart_path}/templates')
         bind(instance_id, binding_id, details, async_allowed, **kwargs)
         data = load_binding_meta(instance_id)
         if data["last_operation"]["state"] == OperationState.SUCCEEDED.value:
@@ -145,6 +143,11 @@ class HelmServiceBroker(ServiceBroker):
         if details.plan_id is not None:
             chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)
             fetch_chart_plan(details.service_id, chart_path, details.plan_id, plan_path)
+        data = load_instance_meta(instance_id)
+        data['last_operation']["state"] = OperationState.IN_PROGRESS.value
+        data['last_operation']["description"] = (
+            f"update {instance_id} in progress at {time.time()}")
+        save_instance_meta(instance_id, data)
         update.delay(instance_id, details)
         return UpdateServiceSpec(is_async=True)
 

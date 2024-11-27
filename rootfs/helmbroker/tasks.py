@@ -2,6 +2,7 @@ import os
 import time
 import yaml
 import logging
+import shutil
 
 from openbrokerapi.service_broker import ProvisionDetails, OperationState, \
     UpdateDetails, BindDetails
@@ -99,10 +100,6 @@ def update(instance_id: str, details: UpdateDetails):
             data["last_operation"]["description"] = f"update {instance_id} failed: {output}"
             save_instance_meta(instance_id, data)
             return
-        data['last_operation']["state"] = OperationState.IN_PROGRESS.value
-        data['last_operation']["description"] = (
-            f"update {instance_id} in progress at {time.time()}")
-        save_instance_meta(instance_id, data)
         chart_path = get_chart_path(instance_id)
         values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
         args = [
@@ -148,7 +145,9 @@ def bind(instance_id: str,
             save_binding_meta(instance_id, data)
             return
         save_binding_meta(instance_id, data)
-        chart_path = get_chart_path(instance_id)
+        chart_path, plan_path = (
+            get_chart_path(instance_id), get_plan_path(instance_id))
+        shutil.copy(f'{plan_path}/bind.yaml', f'{chart_path}/templates')
         values_file = os.path.join(get_plan_path(instance_id), "values.yaml")
         args = [
             "template", details.context["instance_name"], chart_path,
