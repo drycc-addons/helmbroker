@@ -1,4 +1,5 @@
 import os
+import logging
 from flask import Flask, make_response
 from openbrokerapi import api, log_util
 from helmbroker.broker import HelmServiceBroker
@@ -27,5 +28,5 @@ application.config.from_object(Config)
 catalog_api = api.get_blueprint(
     HelmServiceBroker(),
     api.BrokerCredentials(USERNAME, PASSWORD),
-    log_util.basic_config())
+    log_util.basic_config(level=logging.DEBUG if Config.DEBUG else logging.INFO))
 application.register_blueprint(catalog_api)

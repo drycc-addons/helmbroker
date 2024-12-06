@@ -43,6 +43,7 @@ class HelmServiceBroker(ServiceBroker):
                   details: ProvisionDetails,
                   async_allowed: bool,
                   **kwargs) -> ProvisionedServiceSpec:
+        logger.debug(f"*** provision instance {instance_id}")
         instance_path = get_instance_path(instance_id)
         if os.path.exists(instance_path):
             raise ErrInstanceAlreadyExists()
@@ -83,6 +84,7 @@ class HelmServiceBroker(ServiceBroker):
              async_allowed: bool,
              **kwargs
              ) -> Binding:
+        logger.debug(f"*** bind instance {instance_id}")
         is_addon_bindable = get_addon_bindable(details.service_id)
         if not is_addon_bindable:
             raise ErrBadRequest(
@@ -110,7 +112,7 @@ class HelmServiceBroker(ServiceBroker):
                async_allowed: bool,
                **kwargs
                ) -> UnbindSpec:
-        logger.debug(f"unbind instance {instance_id}")
+        logger.debug(f"*** unbind instance {instance_id}")
         unbind.delay(instance_id)
         return UnbindSpec(is_async=True)
 
@@ -120,6 +122,7 @@ class HelmServiceBroker(ServiceBroker):
                async_allowed: bool,
                **kwargs
                ) -> UpdateServiceSpec:
+        logger.debug(f"*** update instance {instance_id}")
         instance_path = get_instance_path(instance_id)
         if not os.path.exists(instance_path):
             raise ErrBadRequest(msg="Instance %s does not exist" % instance_id)
@@ -156,6 +159,7 @@ class HelmServiceBroker(ServiceBroker):
                     details: DeprovisionDetails,
                     async_allowed: bool,
                     **kwargs) -> DeprovisionServiceSpec:
+        logger.debug(f"*** deprovision instance {instance_id}")
         if not os.path.exists(get_instance_path(instance_id)):
             raise ErrInstanceDoesNotExist()
         with new_instance_lock(instance_id):
@@ -175,6 +179,7 @@ class HelmServiceBroker(ServiceBroker):
                        operation_data: Optional[str],
                        **kwargs
                        ) -> LastOperation:
+        logger.debug(f"*** last_operation instance {instance_id}")
         if os.path.exists(get_instance_file(instance_id)):
             data = load_instance_meta(instance_id)
             return LastOperation(
@@ -189,6 +194,7 @@ class HelmServiceBroker(ServiceBroker):
                                operation_data: Optional[str],
                                **kwargs
                                ) -> LastOperation:
+        logger.debug(f"*** last_binding_operation instance {instance_id}")
         if os.path.exists(get_binding_file(instance_id)):
             data = load_binding_meta(instance_id)
             return LastOperation(

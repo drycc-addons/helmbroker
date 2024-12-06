@@ -20,10 +20,12 @@ logger = logging.getLogger(__name__)
 
 @app.task(serializer='pickle')
 def provision(instance_id: str, details: ProvisionDetails):
+    logger.debug(f"*** task provision instance: {instance_id}, before lock")
     with (
         new_instance_lock(instance_id),
         run_instance_hooks(instance_id, "provision") as (status, output)
     ):
+        logger.debug(f"*** task provision instance: {instance_id}")
         backup_instance(instance_id)
         # create instance.json
         data = {
@@ -78,10 +80,12 @@ def provision(instance_id: str, details: ProvisionDetails):
 
 @app.task(serializer='pickle')
 def update(instance_id: str, details: UpdateDetails):
+    logger.debug(f"*** task update instance: {instance_id}, before lock")
     with (
         new_instance_lock(instance_id),
         run_instance_hooks(instance_id, "update") as (status, output)
     ):
+        logger.debug(f"*** task update instance: {instance_id}")
         backup_instance(instance_id)
         data = load_instance_meta(instance_id)
         if details.service_id:
@@ -133,10 +137,12 @@ def bind(instance_id: str,
          details: BindDetails,
          async_allowed: bool,
          **kwargs):
+    logger.debug(f"*** task bind instance: {instance_id}, before lock")
     with (
         new_instance_lock(instance_id),
         run_instance_hooks(instance_id, "bind") as (status, output)
     ):
+        logger.debug(f"*** task bind instance: {instance_id}")
         backup_instance(instance_id)
         data = {"binding_id": binding_id, "credentials": {}, "last_operation": {}}
         if status != 0:
@@ -199,10 +205,12 @@ def bind(instance_id: str,
 
 @app.task(serializer='pickle')
 def unbind(instance_id):
+    logger.debug(f"*** task unbind instance: {instance_id}, before lock")
     with (
         new_instance_lock(instance_id),
-        run_instance_hooks(instance_id, "deprovision") as (status, output)
+        run_instance_hooks(instance_id, "unbind") as (status, output)
     ):
+        logger.debug(f"*** task unbind instance: {instance_id}")
         backup_instance(instance_id)
         data = load_binding_meta(instance_id)
         if status != 0:
@@ -220,10 +228,12 @@ def unbind(instance_id):
 
 @app.task(serializer='pickle')
 def deprovision(instance_id: str):
+    logger.debug(f"*** task deprovision instance: {instance_id}, before lock")
     with (
         new_instance_lock(instance_id),
         run_instance_hooks(instance_id, "deprovision") as (status, output)
     ):
+        logger.debug(f"*** task deprovision instance: {instance_id}")
         backup_instance(instance_id)
         data = load_instance_meta(instance_id)
         if status != 0:

@@ -14,4 +14,4 @@ VALKEY_URL = os.environ.get("HELMBROKER_VALKEY_URL", 'redis://localhost:6379/0')
 
 
 class Config:
-    DEBUG = bool(os.environ.get('HELMBROKER_DEBUG', True))
+    DEBUG = bool(os.environ.get('HELMBROKER_DEBUG', False))
