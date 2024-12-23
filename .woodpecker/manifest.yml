@@ -26,9 +26,11 @@ steps:
     -v $(pwd):$(pwd)
     -w $(pwd)
     docker.io/plugins/manifest
-  secrets:
-  - container_username
-  - container_password
+  environment:
+    CONTAINER_USERNAME:
+      from_secret: container_username
+    CONTAINER_PASSWORD:
+      from_secret: container_password
   when:
     event:
     - tag
