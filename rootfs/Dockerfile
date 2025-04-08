@@ -4,7 +4,7 @@ FROM registry.drycc.cc/drycc/base:${CODENAME}
 ENV DRYCC_UID=1001 \
   DRYCC_GID=1001 \
   DRYCC_HOME_DIR=/workspace \
-  PYTHON_VERSION="3.13" \
+  PYTHON_VERSION="3.12" \
   HELM_VERSION="3.17.2" \
   KUBECTL_VERSION="1.32.3"
 

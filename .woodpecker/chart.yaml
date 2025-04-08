@@ -28,6 +28,7 @@ steps:
     event:
     - push
     - tag
+    - cron
 
 depends_on:
 - manifest
