@@ -49,7 +49,10 @@ spec:
         - -c
         - celery --app helmbroker worker --queues helmbroker.low,helmbroker.middle,helmbroker.high --autoscale=32,1 --loglevel=WARNING
         {{- end }}
-        {{- include "helmbroker.limits" $ | indent 8 }}
+        {{- with index .Values "celery" "resources" }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         {{- include "helmbroker.envs" $ | indent 8 }}
         {{- include "helmbroker.volumeMounts" $ | indent 8 }}
       {{- include "helmbroker.volumes" . | indent 6 }}

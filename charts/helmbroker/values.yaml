@@ -3,8 +3,6 @@ imageTag: "canary"
 imageRegistry: "registry.drycc.cc"
 imagePullPolicy: "Always"
 replicas: 1
-# limitsCpu: "100m"
-# limitsMemory: "50Mi"
 
 ## Enable diagnostic mode
 ##
@@ -44,6 +42,13 @@ environment:
   # HELMBROKER_CONFIG_ROOT: /etc/helmbroker
 
 api:
+  resources: {}
+    # limits:
+    #   cpu: 200m
+    #   memory: 50Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 30Mi
   nodeAffinityPreset:
     key: "drycc.cc/node"
     type: "soft"
@@ -59,6 +64,13 @@ api:
       app: "drycc-helmbroker"
 
 celery:
+  resources: {}
+    # limits:
+    #   cpu: 200m
+    #   memory: 50Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 30Mi
   nodeAffinityPreset:
     key: "drycc.cc/node"
     type: "soft"

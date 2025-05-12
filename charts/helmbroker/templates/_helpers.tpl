@@ -28,20 +28,6 @@ env:
 {{- end }}
 {{- end }}
 
-{{/* Generate helmbroker deployment limits */}}
-{{- define "helmbroker.limits" -}}
-{{- if or (.Values.limitsCpu) (.Values.limitsMemory) }}
-resources:
-  limits:
-{{- if (.Values.limitsCpu) }}
-    cpu: {{.Values.limitsCpu}}
-{{- end }}
-{{- if (.Values.limitsMemory) }}
-    memory: {{.Values.limitsMemory}}
-{{- end }}
-{{- end }}
-{{- end }}
-
 {{/* Generate helmbroker deployment volumeMounts */}}
 {{- define "helmbroker.volumeMounts" }}
 volumeMounts:
