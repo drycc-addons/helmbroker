@@ -33,8 +33,8 @@ spec:
           args:
           - netcat
           - -v
-          - -a
-          - $(DRYCC_HELMBROKER_SERVICE_HOST):$(DRYCC_HELMBROKER_SERVICE_PORT)
+          - -u
+          - http://drycc-helmbroker
         {{- include "helmbroker.envs" . | indent 10 }}
       containers:
       - name: drycc-helmbroker-celery

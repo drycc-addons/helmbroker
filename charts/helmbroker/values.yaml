@@ -95,20 +95,5 @@ persistence:
   storageClass: ""
   volumeName: ""
 
-global:
-  # Set the location of Workflow's valkey instance
-  # Valid values are:
-  # - on-cluster: Run Valkey within the Kubernetes cluster
-  # - off-cluster: Run Valkey outside the Kubernetes cluster (configure in controller section)
-  valkeyLocation: "on-cluster"
-  # Enable usage of RBAC authorization mode
-  #
-  # Valid values are:
-  # - true: all RBAC-related manifests will be installed (in case your cluster supports RBAC)
-  # - false: no RBAC-related manifests will be installed
-  rbac: true
-  # A domain name consists of one or more parts.
-  # Periods (.) are used to separate these parts.
-  # Each part must be 1 to 63 characters in length and can contain lowercase letters, digits, and hyphens (-).
-  # It must start and end with a lowercase letter or digit.
-  clusterDomain: "cluster.local"
+valkey:
+  enabled: true

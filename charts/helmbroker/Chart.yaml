@@ -9,6 +9,7 @@ dependencies:
   - name: valkey
     repository: {{repository}}
     version: x.x.x
+    condition: valkey.enabled
 description: Drycc Workflow helmbroker.
 maintainers:
   - name: Drycc Team

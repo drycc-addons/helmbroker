@@ -18,8 +18,7 @@ def readiness():
     if "KUBECONFIG" in os.environ:
         return "OK"
     elif "KUBERNETES_SERVICE_PORT" in os.environ and \
-            ("KUBERNETES_SERVICE_HOST" in os.environ or
-             "KUBERNETES_CLUSTER_DOMAIN" in os.environ):
+            "KUBERNETES_SERVICE_HOST" in os.environ:
         return "OK"
     return make_response("kubernetes not available", 500)
 

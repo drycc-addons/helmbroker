@@ -13,14 +13,14 @@ env:
     secretKeyRef:
       name: helmbroker-creds
       key: valkey-url
-{{- else if eq .Values.global.valkeyLocation "on-cluster"  }}
+{{- else if .Values.valkey.enabled }}
 - name: VALKEY_PASSWORD
   valueFrom:
     secretKeyRef:
       name: valkey-creds
       key: password
 - name: HELMBROKER_VALKEY_URL
-  value: "redis://:$(VALKEY_PASSWORD)@drycc-valkey.{{.Release.Namespace}}.svc.{{.Values.global.clusterDomain}}:26379/0?master_set=drycc"
+  value: "redis://:$(VALKEY_PASSWORD)@drycc-valkey:26379/0?master_set=drycc"
 {{- end }}
 {{- range $key, $value := .Values.environment }}
 - name: {{ $key }}
