@@ -2,7 +2,7 @@ imageOrg: "drycc-addons"
 imageTag: "canary"
 imageRegistry: "registry.drycc.cc"
 imagePullPolicy: "Always"
-replicas: 1
+
 
 ## Enable diagnostic mode
 ##
@@ -24,8 +24,6 @@ repositories:
   - name: drycc-helm-broker
     url: https://github.com/drycc/addons/releases/download/latest/index.yaml
 
-celeryReplicas: 1
-
 # broker_credentials:
 # Optional Usernames and passwords that will be required to communicate with service broker
 username: admin
@@ -42,6 +40,7 @@ environment:
   # HELMBROKER_CONFIG_ROOT: /etc/helmbroker
 
 api:
+  replicas: 1
   resources: {}
     # limits:
     #   cpu: 200m
@@ -64,6 +63,7 @@ api:
       app: "drycc-helmbroker"
 
 celery:
+  replicas: 1
   resources: {}
     # limits:
     #   cpu: 200m
