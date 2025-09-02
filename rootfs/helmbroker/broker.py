@@ -13,7 +13,7 @@ from openbrokerapi.service_broker import ServiceBroker, Service, \
     UpdateDetails, UpdateServiceSpec, DeprovisionDetails, \
     DeprovisionServiceSpec, LastOperation, OperationState
 
-from .utils import verify_parameters, new_instance_lock
+from .utils import verify_parameters, new_instance_lock, verify_parameters_by_plan
 from .database.fetch import fetch_chart_plan
 from .database.query import get_instance_path, get_chart_path, get_plan_path, \
     get_addon_updateable, get_addon_bindable, get_addon_allow_params, \
@@ -64,6 +64,10 @@ class HelmServiceBroker(ServiceBroker):
         os.makedirs(instance_path, exist_ok=True)
         chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)
         fetch_chart_plan(details.service_id, chart_path, details.plan_id, plan_path)
+        # verify instance-schema
+        msg = verify_parameters_by_plan(instance_id, details.parameters)
+        if msg:
+            raise ErrBadRequest(msg)
         provision.delay(instance_id, details)
         return ProvisionedServiceSpec(state=ProvisionState.IS_ASYNC)
 
@@ -146,6 +150,10 @@ class HelmServiceBroker(ServiceBroker):
         if details.plan_id is not None:
             chart_path, plan_path = get_chart_path(instance_id), get_plan_path(instance_id)
             fetch_chart_plan(details.service_id, chart_path, details.plan_id, plan_path)
+        # verify instance-schema
+        msg = verify_parameters_by_plan(instance_id, details.parameters)
+        if msg:
+            raise ErrBadRequest(msg)
         data = load_instance_meta(instance_id)
         data['last_operation']["state"] = OperationState.IN_PROGRESS.value
         data['last_operation']["description"] = (

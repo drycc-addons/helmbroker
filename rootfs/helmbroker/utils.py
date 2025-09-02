@@ -5,6 +5,7 @@ import subprocess
 import base64
 import copy
 import logging
+import jsonschema
 from urllib.parse import urlparse, parse_qs
 from contextlib import contextmanager
 from redis.client import Redis
@@ -168,3 +169,52 @@ def _verify_required_parameters(allow_parameters, parameters):
             if error:
                 error_parameters.add(allow_parameter["name"])
     return error_parameters
+
+
+def verify_parameters_by_plan(instance_id, parameters):
+    """verify parameters allowed or not"""
+    if not parameters:
+        return ""
+    # read schema file
+    from .database.query import get_plan_schema_path
+    schema_file = get_plan_schema_path(instance_id)
+    try:
+        with open(schema_file, 'r') as f:
+            schema = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return ""
+    if not schema:
+        return ""
+    # get parameters
+    if "rawValues" in parameters:
+        params = yaml.safe_load(base64.b64decode(parameters["rawValues"]))
+    else:
+        params = _convert_to_nested_dict(parameters)
+    # validate schema
+    try:
+        jsonschema.validate(params, schema)
+    except jsonschema.ValidationError as e:
+        return f"could not validate: {e.message}"
+    return ""
+
+
+def _convert_to_nested_dict(assignments):
+    """
+    {"a.b.c": "1Gi", "a.b.d": "2Gi"}
+    ->
+    {'a': {'b': {'c': '1Gi', 'd': '2Gi'}}}
+    """
+    def set_nested_value(d, keys, value):
+        if len(keys) == 1:
+            d[keys[0]] = value
+        else:
+            if keys[0] not in d:
+                d[keys[0]] = {}
+            set_nested_value(d[keys[0]], keys[1:], value)
+    result = {}
+    if isinstance(assignments, dict):
+        # dict format: {"a.b.c": "1Gi"}
+        for key_path, value in assignments.items():
+            keys = key_path.split('.')
+            set_nested_value(result, keys, value)
+    return result

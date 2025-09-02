@@ -22,6 +22,10 @@ def get_plan_path(instance_id):
     return os.path.join(get_instance_path(instance_id), "plan")
 
 
+def get_plan_schema_path(instance_id):
+    return os.path.join(get_instance_path(instance_id), "plan", "instance-schema.json")
+
+
 def get_hooks_path(instance_id):
     return os.path.join(get_plan_path(instance_id), "hooks")
 
