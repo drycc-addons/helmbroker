@@ -37,7 +37,8 @@ spec:
           - http://drycc-helmbroker
         {{- include "helmbroker.envs" . | indent 10 }}
       containers:
-      - name: drycc-helmbroker-celery
+      {{- range $key := (list "low" "middle" "high") }}
+      - name: drycc-helmbroker-celery-{{$key}}
         image: {{$.Values.imageRegistry}}/{{$.Values.imageOrg}}/helmbroker:{{$.Values.imageTag}}
         imagePullPolicy: {{$.Values.imagePullPolicy}}
         {{- if $.Values.diagnosticMode.enabled }}
@@ -47,12 +48,13 @@ spec:
         args:
         - /bin/bash
         - -c
-        - celery --app helmbroker worker --queues helmbroker.low,helmbroker.middle,helmbroker.high --autoscale=32,1 --loglevel=WARNING
+        - celery --app helmbroker worker -n {{uuidv4}}@%h --queues helmbroker.{{$key}} --autoscale=32,1 --loglevel=WARNING
         {{- end }}
-        {{- with index .Values "celery" "resources" }}
+        {{- with index $.Values "celery" "resources" }}
         resources:
           {{- toYaml . | nindent 10 }}
         {{- end }}
         {{- include "helmbroker.envs" $ | indent 8 }}
         {{- include "helmbroker.volumeMounts" $ | indent 8 }}
+      {{- end }}
       {{- include "helmbroker.volumes" . | indent 6 }}
