@@ -21,6 +21,7 @@ from .database.query import get_instance_path, get_chart_path, get_plan_path, \
 from .database.metadata import load_instance_meta, load_binding_meta, load_addons_meta, \
     save_instance_meta
 from .tasks import provision, bind, deprovision, update, unbind
+from .config import INSTANCE_NAME_LENS
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,10 @@ class HelmServiceBroker(ServiceBroker):
                   async_allowed: bool,
                   **kwargs) -> ProvisionedServiceSpec:
         logger.debug(f"*** provision instance {instance_id}")
+        # verify instance_name length
+        if len(details.context["instance_name"]) > INSTANCE_NAME_LENS:
+            raise ErrBadRequest(
+                msg=f"The length of the instance name cannot exceed {INSTANCE_NAME_LENS}.")
         instance_path = get_instance_path(instance_id)
         if os.path.exists(instance_path):
             raise ErrInstanceAlreadyExists()

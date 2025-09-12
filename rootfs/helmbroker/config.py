@@ -11,6 +11,7 @@ USERNAME = os.environ.get('HELMBROKER_USERNAME')
 PASSWORD = os.environ.get('HELMBROKER_PASSWORD')
 
 VALKEY_URL = os.environ.get("HELMBROKER_VALKEY_URL", 'redis://localhost:6379/0')
+INSTANCE_NAME_LENS = int(os.environ.get("INSTANCE_NAME_LENS", '32'))
 
 
 class Config:
