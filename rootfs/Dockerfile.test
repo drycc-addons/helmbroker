@@ -5,8 +5,8 @@ ENV DRYCC_UID=1001 \
   DRYCC_GID=1001 \
   DRYCC_HOME_DIR=/workspace \
   PYTHON_VERSION="3.14" \
-  HELM_VERSION="3.19.0" \
-  KUBECTL_VERSION="1.34.1"
+  HELM_VERSION="4.1.3" \
+  KUBECTL_VERSION="1.35.3"
 
 RUN groupadd drycc --gid ${DRYCC_GID} \
   && useradd drycc -u ${DRYCC_UID} -g ${DRYCC_GID} -s /bin/bash -m -d ${DRYCC_HOME_DIR}
